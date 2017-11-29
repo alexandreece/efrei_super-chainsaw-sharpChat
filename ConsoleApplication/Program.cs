@@ -1,12 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Windows.Forms;
 
-namespace ConsoleApplication
+namespace super_chainsaw_sharpChatClient
 {
-    internal class Program
+    static class Program
     {
-        public static void Main(string[] args)
+        [STAThread]
+        static void Main()
         {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
         }
     }
 }
