@@ -7,7 +7,19 @@ namespace super_chainsaw_sharpChatClient
 {
     public partial class Form1 : Form
     {
-        TcpClient client;
+        private TcpClient client;
+        private Colors textColors;
+        private RtfWriter rtfWriter;
+
+        private enum ColorNames
+        {// warning: these names must always match the order in which the colors are added to the list
+         // (RTF format is such that 0 is always black and the first color in the list is indexed by 1)
+
+            black,
+            red,
+            green,
+            blue
+        }
 
         public Form1()
         {
@@ -15,6 +27,9 @@ namespace super_chainsaw_sharpChatClient
 
             client = null;
             serverAddress.Text = "127.0.0.1";
+            textColors = new Colors().add(new Color(100, 20, 20))// warning: upon modifying this list of colors,
+                                     .add(new Color(20, 100, 20))// also modify the enumeration of names so that
+                                     .add(new Color(20, 20, 100));// the names still match the colors in the list
         }
 
         private void connect_Click(object sender, EventArgs e)
@@ -23,7 +38,8 @@ namespace super_chainsaw_sharpChatClient
 
             if (client == null)
                 client = new TcpClient();
-            messages.Text = "Connected to \"";
+            rtfWriter = new RtfWriter(textColors);
+            messages.Rtf = rtfWriter.color((int)ColorNames.green).text("Connected to \"").RtfText;
 
             try
             {
@@ -32,15 +48,16 @@ namespace super_chainsaw_sharpChatClient
             }
             catch (Exception)
             {
-                messages.Text = "Error connecting to \"";
+                rtfWriter = new RtfWriter(textColors);
+                messages.Rtf = rtfWriter.color((int)ColorNames.red).text("Error connecting to \"").RtfText;
             }
 
-            messages.Text += serverAddress.Text + ":" + serverPort.Text + "\".";
+            messages.Rtf = rtfWriter.text(serverAddress.Text + ":" + serverPort.Text + "\".").RtfText;
         }
 
         private void envoyer_Click(object sender, EventArgs e)
         {
-            Byte[] message = System.Text.Encoding.ASCII.GetBytes(this.message.Text);
+            var message = System.Text.Encoding.ASCII.GetBytes(this.message.Text);
             client.GetStream().Write(message, 0, message.Length);
         }
 
@@ -48,7 +65,7 @@ namespace super_chainsaw_sharpChatClient
         {
             while (Thread.CurrentThread.IsAlive)
             {
-                Byte[] message = new Byte[256];
+                var message = new Byte[256];
                 client.GetStream().Read(message, 0, message.Length);
 
                 this.message.Text += System.Text.Encoding.ASCII.GetString(message, 0, message.Length);
