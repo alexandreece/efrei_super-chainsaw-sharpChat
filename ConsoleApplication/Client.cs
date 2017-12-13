@@ -5,6 +5,9 @@ namespace super_chainsaw_sharpChatClient
 {
     class Client
     {
+        public delegate void statusChanged();
+        public event statusChanged Started;
+
         private string hostname;
         private int port;
         TcpClient comm;
@@ -18,6 +21,7 @@ namespace super_chainsaw_sharpChatClient
         public void start()
         {
             comm = new TcpClient(hostname, port);
+            Started();
             while (true)
             {
                 var rcvMsg = Net.rcvMsg(comm.GetStream());
@@ -33,6 +37,11 @@ namespace super_chainsaw_sharpChatClient
                         throw new ArgumentOutOfRangeException(nameof(rcvMsg));
                 }
             }
+        }
+
+        public void stop()
+        {
+            // todo : disconnect client, stop infinite loops and send notification signal to write RTF message
         }
 
         public void sendMessage(string message)

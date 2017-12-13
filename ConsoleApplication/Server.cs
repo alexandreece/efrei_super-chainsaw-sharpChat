@@ -7,17 +7,19 @@ namespace super_chainsaw_sharpChatClient
 {
     public class Server
     {
-        private int port;
+        public delegate void update();
+        public event update Started;
 
-        public Server(int port)
-        {
-            this.port = port; 
-        } 
+        private int port;
+        private byte[] localhost = {127, 0, 0, 1};
+
+        public Server(int port) => this.port = port;
 
         public void start()
         {
-            var l = new TcpListener(new IPAddress(new byte[] { 127, 0, 0, 1 }), port);
+            var l = new TcpListener(new IPAddress(localhost), port);
             l.Start();
+            Started();
 
             while (true)
             {
@@ -30,10 +32,7 @@ namespace super_chainsaw_sharpChatClient
         {
             private TcpClient comm;
 
-            public Receiver(TcpClient s)
-            {
-                comm = s;
-            }
+            public Receiver(TcpClient s) => comm = s;
 
             public void doOperation()
             {
@@ -54,6 +53,12 @@ namespace super_chainsaw_sharpChatClient
                     }
                 }
             }
+        }
+
+        public void stop()
+        {
+            // todo : send notification then disconnect every client then delete TCP server
+            // todo : check what happens with the infinite while loops
         }
     }
 }
