@@ -7,6 +7,7 @@ namespace super_chainsaw_sharpChatClient
     {
         private string hostname;
         private int port;
+        TcpClient comm;
 
         public Client(string h, int p)
         {
@@ -16,11 +17,9 @@ namespace super_chainsaw_sharpChatClient
 
         public void start()
         {
-            var comm = new TcpClient(hostname, port);
+            comm = new TcpClient(hostname, port);
             while (true)
             {
-                Net.sendMsg(comm.GetStream(), new MessageToAppend("hello"));
-
                 var rcvMsg = Net.rcvMsg(comm.GetStream());
                 switch (rcvMsg)
                 {
@@ -34,6 +33,11 @@ namespace super_chainsaw_sharpChatClient
                         throw new ArgumentOutOfRangeException(nameof(rcvMsg));
                 }
             }
+        }
+
+        public void sendMessage(string message)
+        {
+            Net.sendMsg(comm.GetStream(), new MessageToAppend(message));
         }
     }
 }

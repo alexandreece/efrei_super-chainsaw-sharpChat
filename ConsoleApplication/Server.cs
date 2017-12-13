@@ -47,6 +47,7 @@ namespace super_chainsaw_sharpChatClient
                         case CredentialsToConnect credentialsToConnect:
                             break;
                         case MessageToAppend messageToAppend:
+                            Console.WriteLine("Server received message: " + messageToAppend);
                             break;
                         default:
                             throw new ArgumentOutOfRangeException(nameof(rcvMsg));

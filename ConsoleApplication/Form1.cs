@@ -32,6 +32,21 @@ namespace super_chainsaw_sharpChatClient
             TextColors = new Colors().add(new Color(100, 20, 20))// warning: upon modifying this list of colors,
                                      .add(new Color(20, 100, 20))// also modify the enumeration of names so that
                                      .add(new Color(20, 20, 100));// the names still match the colors in the list
+
+            while (true)// interface en console pour tester la communication réseau
+            {
+                Console.WriteLine("Entrez le port : ");
+                int port = int.Parse(Console.ReadLine());
+
+                var server1 = new Server(port);
+                var client1 = new Client("127.0.0.1", port);
+                new Thread(server1.start).Start();
+                new Thread(client1.start).Start();
+
+                Console.WriteLine("Entrez un message à envoyer : ");
+                string message = Console.ReadLine();
+                client1.sendMessage(message);
+            }
         }
 
         private void startServer()
