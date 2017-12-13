@@ -94,6 +94,9 @@ namespace super_chainsaw_sharpChatClient
 
         private void placeControls()
         {
+            // todo : place here the lines that place and size the controls
+            // todo : + resize appropriate controls according to new form size
+            // todo : + add conditions on minimum height and width and resize form if it became too small
         }
 
         private void connect_Click(object sender, EventArgs e)
