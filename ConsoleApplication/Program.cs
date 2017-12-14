@@ -10,7 +10,7 @@ namespace super_chainsaw_sharpChatClient
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Application.Run(new ChatForm());
         }
     }
 }
