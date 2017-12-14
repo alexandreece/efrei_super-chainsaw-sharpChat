@@ -5,16 +5,16 @@ namespace super_chainsaw_sharpChatClient
 {
     public class Net
     {
-        public static void sendMsg(Stream s, Message msg)
+        public static void sendMsg(Stream s, SerealizedMessage msg)
         {
             var bf = new BinaryFormatter();
             bf.Serialize(s, msg);
         }
 
-        public static Message rcvMsg(Stream s)
+        public static SerealizedMessage rcvMsg(Stream s)
         {
             var bf = new BinaryFormatter();
-            return (Message)bf.Deserialize(s);
+            return (SerealizedMessage)bf.Deserialize(s);
         }
     }
 }

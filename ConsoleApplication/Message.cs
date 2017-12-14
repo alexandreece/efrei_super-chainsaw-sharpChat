@@ -3,16 +3,16 @@ using System.Collections.Generic;
 
 namespace super_chainsaw_sharpChatClient
 {
-    public interface Message
+    public interface SerealizedMessage
     {
         string ToString();
     }
 
-    public interface ClientToServerMessage : Message
+    public interface ClientToServerMessage : SerealizedMessage
     {
     }
 
-    public interface ServerToClientMessage : Message
+    public interface ServerToClientMessage : SerealizedMessage
     {
     }
 
@@ -74,10 +74,15 @@ namespace super_chainsaw_sharpChatClient
     [Serializable]
     public class ChatroomMessageAppended : ServerToClientMessage
     {
+        public string Username { get; }
         public string Message { get; }
+        public DateTime DateAdded { get; }
 
-        public ChatroomMessageAppended(string message) => Message = message;
-
-        public override string ToString() => Message;
+        public ChatroomMessageAppended(string username, string message)
+        {
+            Username = username;
+            Message = message;
+            DateAdded = DateTime.Now;
+        }
     }
 }

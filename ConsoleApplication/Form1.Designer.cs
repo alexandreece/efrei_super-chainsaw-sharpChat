@@ -26,7 +26,7 @@ namespace super_chainsaw_sharpChatClient
                 {
                     if (client == null)
                     {
-                        client = new Client(username.Text, int.Parse(serverPort.Text));// Client(username, (int)serverPort.Value);
+                        client = new Client(serverAddress.Text, int.Parse(serverPort.Text));// Client(address, (int)serverPort.Value);
                         client.Started +=
                             delegate()
                             {
@@ -55,6 +55,11 @@ namespace super_chainsaw_sharpChatClient
             this.messages = new System.Windows.Forms.RichTextBox();
             this.message = new System.Windows.Forms.TextBox();
             this.sendMessageButton = new System.Windows.Forms.Button();
+            sendMessageButton.Click +=
+                delegate(object sender, EventArgs args)
+                {
+                    client.sendMessage(message.Text);
+                };
             this.connectedClientsGroupBox.SuspendLayout();
             this.ChatroomsGroupBox.SuspendLayout();
             this.newChatroomGroupBox.SuspendLayout();
