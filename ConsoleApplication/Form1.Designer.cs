@@ -1,9 +1,29 @@
 ﻿using System;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace super_chainsaw_sharpChatClient
 {
-    partial class ChatForm
+    class AutoScrollingRichTextBox : RichTextBox
+    {
+        public new string Rtf
+        {
+            get => base.Rtf;
+            set
+            {
+                base.Rtf = value;
+                scrollToBottom();
+            }
+        }
+
+        private void scrollToBottom()
+        {
+            SelectionStart = Text.Length;
+            ScrollToCaret();
+        }
+    }
+
+    sealed partial class ChatForm
     {
         private void InitializeComponent()
         {
@@ -15,8 +35,18 @@ namespace super_chainsaw_sharpChatClient
             this.removeChatroom = new System.Windows.Forms.Button();
             this.newChatroomGroupBox = new System.Windows.Forms.GroupBox();
             this.createChatroomButton = new System.Windows.Forms.Button();
+            createChatroomButton.Click +=
+                delegate(object sender, EventArgs args)
+                {
+                    client.createChatroom(chatroomName.Text);
+                };
             this.chatroomName = new System.Windows.Forms.TextBox();
             this.chatroomsList = new System.Windows.Forms.ListBox();
+            chatroomsList.SelectedIndexChanged +=
+                delegate(object sender, EventArgs args)
+                {
+                    client.joinChatroom(chatroomsList.SelectedItem.ToString());
+                };
             this.connectionGroupBox = new System.Windows.Forms.GroupBox();
             this.colonLabel = new System.Windows.Forms.Label();
             this.atLabel = new System.Windows.Forms.Label();
@@ -30,8 +60,18 @@ namespace super_chainsaw_sharpChatClient
                         client.Started +=
                             delegate()
                             {
-                                rtfWriter = new RtfWriter(TextColors);
-                                messages.Rtf = rtfWriter.color(0).text("server started").RtfText;
+                                messagesWriter = new MessagesWriter();
+                                messages.Rtf = messagesWriter.color(0).text("server started").RtfText;
+                            };
+                        client.ChatroomMessageAppended +=
+                            delegate(ChatroomMessageAppended chatroomMessageAppended)
+                            {
+                                var username = chatroomMessageAppended.Username;// todo : check why username is not set and fix that so that username always prints on screen
+                                DateTime dateAdded = chatroomMessageAppended.DateAdded;
+                                var message = chatroomMessageAppended.Message;
+
+                                messages.Rtf = messagesWriter.usernameAtDate(username, dateAdded)
+                                                             .message(message).RtfText;
                             };
                         new Thread(client.start).Start();
                     }
@@ -52,7 +92,7 @@ namespace super_chainsaw_sharpChatClient
             this.rejectPendingConnectionButton = new System.Windows.Forms.Button();
             this.pendingConnections = new System.Windows.Forms.ListBox();
             this.acceptPendingConnectionButton = new System.Windows.Forms.Button();
-            this.messages = new System.Windows.Forms.RichTextBox();
+            this.messages = new AutoScrollingRichTextBox();
             this.message = new System.Windows.Forms.TextBox();
             this.sendMessageButton = new System.Windows.Forms.Button();
             sendMessageButton.Click +=
@@ -67,9 +107,7 @@ namespace super_chainsaw_sharpChatClient
             this.serverGroupBox.SuspendLayout();
             this.pendingConnectionsGroupBox.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // connectedClientsGroupBox
-            // 
+
             this.connectedClientsGroupBox.Controls.Add(this.transferServerButton);
             this.connectedClientsGroupBox.Controls.Add(this.disconnectClientButton);
             this.connectedClientsGroupBox.Controls.Add(this.connectedClientsList);
@@ -79,35 +117,27 @@ namespace super_chainsaw_sharpChatClient
             this.connectedClientsGroupBox.TabIndex = 0;
             this.connectedClientsGroupBox.TabStop = false;
             this.connectedClientsGroupBox.Text = "Connected clients";
-            // 
-            // transferServerButton
-            // 
+
             this.transferServerButton.Location = new System.Drawing.Point(87, 265);
             this.transferServerButton.Name = "transferServerButton";
             this.transferServerButton.Size = new System.Drawing.Size(104, 23);
             this.transferServerButton.TabIndex = 2;
             this.transferServerButton.Text = "Transfer server to";
             this.transferServerButton.UseVisualStyleBackColor = true;
-            // 
-            // disconnectClientButton
-            // 
+
             this.disconnectClientButton.Location = new System.Drawing.Point(6, 265);
             this.disconnectClientButton.Name = "disconnectClientButton";
             this.disconnectClientButton.Size = new System.Drawing.Size(75, 23);
             this.disconnectClientButton.TabIndex = 1;
             this.disconnectClientButton.Text = "Disconnect";
             this.disconnectClientButton.UseVisualStyleBackColor = true;
-            // 
-            // connectedClientsList
-            // 
+
             this.connectedClientsList.FormattingEnabled = true;
             this.connectedClientsList.Location = new System.Drawing.Point(7, 19);
             this.connectedClientsList.Name = "connectedClientsList";
             this.connectedClientsList.Size = new System.Drawing.Size(187, 238);
             this.connectedClientsList.TabIndex = 0;
-            // 
-            // ChatroomsGroupBox
-            // 
+
             this.ChatroomsGroupBox.Controls.Add(this.removeChatroom);
             this.ChatroomsGroupBox.Controls.Add(this.newChatroomGroupBox);
             this.ChatroomsGroupBox.Controls.Add(this.chatroomsList);
@@ -117,18 +147,14 @@ namespace super_chainsaw_sharpChatClient
             this.ChatroomsGroupBox.TabIndex = 0;
             this.ChatroomsGroupBox.TabStop = false;
             this.ChatroomsGroupBox.Text = "Active chatrooms";
-            // 
-            // removeChatroom
-            // 
+
             this.removeChatroom.Location = new System.Drawing.Point(6, 498);
             this.removeChatroom.Name = "removeChatroom";
             this.removeChatroom.Size = new System.Drawing.Size(188, 23);
             this.removeChatroom.TabIndex = 2;
             this.removeChatroom.Text = "Remove";
             this.removeChatroom.UseVisualStyleBackColor = true;
-            // 
-            // newChatroomGroupBox
-            // 
+
             this.newChatroomGroupBox.Controls.Add(this.createChatroomButton);
             this.newChatroomGroupBox.Controls.Add(this.chatroomName);
             this.newChatroomGroupBox.Location = new System.Drawing.Point(7, 20);
@@ -136,33 +162,25 @@ namespace super_chainsaw_sharpChatClient
             this.newChatroomGroupBox.Size = new System.Drawing.Size(187, 72);
             this.newChatroomGroupBox.TabIndex = 1;
             this.newChatroomGroupBox.TabStop = false;
-            // 
-            // createChatroomButton
-            // 
+
             this.createChatroomButton.Location = new System.Drawing.Point(7, 37);
             this.createChatroomButton.Name = "createChatroomButton";
             this.createChatroomButton.Size = new System.Drawing.Size(174, 23);
             this.createChatroomButton.TabIndex = 1;
             this.createChatroomButton.Text = "Create chatroom";
             this.createChatroomButton.UseVisualStyleBackColor = true;
-            // 
-            // chatroomName
-            // 
+
             this.chatroomName.Location = new System.Drawing.Point(7, 11);
             this.chatroomName.Name = "chatroomName";
             this.chatroomName.Size = new System.Drawing.Size(174, 20);
             this.chatroomName.TabIndex = 0;
-            // 
-            // chatroomsList
-            // 
+
             this.chatroomsList.FormattingEnabled = true;
             this.chatroomsList.Location = new System.Drawing.Point(6, 98);
             this.chatroomsList.Name = "chatroomsList";
             this.chatroomsList.Size = new System.Drawing.Size(188, 394);
             this.chatroomsList.TabIndex = 0;
-            // 
-            // connectionGroupBox
-            // 
+
             this.connectionGroupBox.Controls.Add(this.colonLabel);
             this.connectionGroupBox.Controls.Add(this.atLabel);
             this.connectionGroupBox.Controls.Add(this.connectDisconnectClientButton);
@@ -175,59 +193,45 @@ namespace super_chainsaw_sharpChatClient
             this.connectionGroupBox.TabIndex = 1;
             this.connectionGroupBox.TabStop = false;
             this.connectionGroupBox.Text = "username @ address : port";
-            // 
-            // colonLabel
-            // 
+
             this.colonLabel.AutoSize = true;
             this.colonLabel.Location = new System.Drawing.Point(231, 22);
             this.colonLabel.Name = "colonLabel";
             this.colonLabel.Size = new System.Drawing.Size(10, 13);
             this.colonLabel.TabIndex = 5;
             this.colonLabel.Text = ":";
-            // 
-            // atLabel
-            // 
+
             this.atLabel.AutoSize = true;
             this.atLabel.Location = new System.Drawing.Point(125, 22);
             this.atLabel.Name = "atLabel";
             this.atLabel.Size = new System.Drawing.Size(18, 13);
             this.atLabel.TabIndex = 4;
             this.atLabel.Text = "@";
-            // 
-            // connectDisconnectClientButton
-            // 
+
             this.connectDisconnectClientButton.Location = new System.Drawing.Point(291, 17);
             this.connectDisconnectClientButton.Name = "connectDisconnectClientButton";
             this.connectDisconnectClientButton.Size = new System.Drawing.Size(136, 23);
             this.connectDisconnectClientButton.TabIndex = 3;
             this.connectDisconnectClientButton.Text = "Connect / Disconnect";
             this.connectDisconnectClientButton.UseVisualStyleBackColor = true;
-            // 
-            // serverPort
-            // 
+
             this.serverPort.Location = new System.Drawing.Point(241, 19);
             this.serverPort.Name = "serverPort";
             this.serverPort.Size = new System.Drawing.Size(44, 20);
             this.serverPort.TabIndex = 2;
-            // 
-            // serverAddress
-            // 
+
             this.serverAddress.Location = new System.Drawing.Point(143, 19);
             this.serverAddress.Name = "serverAddress";
             this.serverAddress.Size = new System.Drawing.Size(88, 20);
             this.serverAddress.TabIndex = 1;
             this.serverAddress.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // username
-            // 
+
             this.username.Location = new System.Drawing.Point(6, 19);
             this.username.Name = "username";
             this.username.Size = new System.Drawing.Size(119, 20);
             this.username.TabIndex = 0;
             this.username.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // serverGroupBox
-            // 
+
             this.serverGroupBox.Controls.Add(this.startStopServerButton);
             this.serverGroupBox.Controls.Add(this.newServerPort);
             this.serverGroupBox.Controls.Add(this.pendingConnectionsGroupBox);
@@ -238,25 +242,19 @@ namespace super_chainsaw_sharpChatClient
             this.serverGroupBox.TabIndex = 2;
             this.serverGroupBox.TabStop = false;
             this.serverGroupBox.Text = "Server";
-            // 
-            // startStopServerButton
-            // 
+
             this.startStopServerButton.Location = new System.Drawing.Point(112, 17);
             this.startStopServerButton.Name = "startStopServerButton";
             this.startStopServerButton.Size = new System.Drawing.Size(75, 23);
             this.startStopServerButton.TabIndex = 2;
             this.startStopServerButton.Text = "Start / Stop";
             this.startStopServerButton.UseVisualStyleBackColor = true;
-            // 
-            // newServerPort
-            // 
+
             this.newServerPort.Location = new System.Drawing.Point(6, 19);
             this.newServerPort.Name = "newServerPort";
             this.newServerPort.Size = new System.Drawing.Size(100, 20);
             this.newServerPort.TabIndex = 1;
-            // 
-            // pendingConnectionsGroupBox
-            // 
+
             this.pendingConnectionsGroupBox.Controls.Add(this.rejectPendingConnectionButton);
             this.pendingConnectionsGroupBox.Controls.Add(this.pendingConnections);
             this.pendingConnectionsGroupBox.Controls.Add(this.acceptPendingConnectionButton);
@@ -266,35 +264,27 @@ namespace super_chainsaw_sharpChatClient
             this.pendingConnectionsGroupBox.TabIndex = 0;
             this.pendingConnectionsGroupBox.TabStop = false;
             this.pendingConnectionsGroupBox.Text = "Pending connections";
-            // 
-            // rejectPendingConnectionButton
-            // 
+
             this.rejectPendingConnectionButton.Location = new System.Drawing.Point(89, 146);
             this.rejectPendingConnectionButton.Name = "rejectPendingConnectionButton";
             this.rejectPendingConnectionButton.Size = new System.Drawing.Size(75, 23);
             this.rejectPendingConnectionButton.TabIndex = 2;
             this.rejectPendingConnectionButton.Text = "Reject";
             this.rejectPendingConnectionButton.UseVisualStyleBackColor = true;
-            // 
-            // pendingConnections
-            // 
+
             this.pendingConnections.FormattingEnabled = true;
             this.pendingConnections.Location = new System.Drawing.Point(6, 19);
             this.pendingConnections.Name = "pendingConnections";
             this.pendingConnections.Size = new System.Drawing.Size(187, 121);
             this.pendingConnections.TabIndex = 0;
-            // 
-            // acceptPendingConnectionButton
-            // 
+
             this.acceptPendingConnectionButton.Location = new System.Drawing.Point(6, 146);
             this.acceptPendingConnectionButton.Name = "acceptPendingConnectionButton";
             this.acceptPendingConnectionButton.Size = new System.Drawing.Size(75, 23);
             this.acceptPendingConnectionButton.TabIndex = 1;
             this.acceptPendingConnectionButton.Text = "Accept";
             this.acceptPendingConnectionButton.UseVisualStyleBackColor = true;
-            // 
-            // messages
-            // 
+
             this.messages.ForeColor = System.Drawing.SystemColors.MenuHighlight;
             this.messages.Location = new System.Drawing.Point(445, 74);
             this.messages.Name = "messages";
@@ -302,26 +292,20 @@ namespace super_chainsaw_sharpChatClient
             this.messages.Size = new System.Drawing.Size(427, 262);
             this.messages.TabIndex = 3;
             this.messages.Text = "arnaud@127.0.0.1:8080 was successfully connected";
-            // 
-            // message
-            // 
+
             this.message.Location = new System.Drawing.Point(440, 343);
             this.message.Multiline = true;
             this.message.Name = "message";
             this.message.Size = new System.Drawing.Size(432, 177);
             this.message.TabIndex = 4;
-            // 
-            // sendMessageButton
-            // 
+
             this.sendMessageButton.Location = new System.Drawing.Point(445, 526);
             this.sendMessageButton.Name = "sendMessageButton";
             this.sendMessageButton.Size = new System.Drawing.Size(427, 23);
             this.sendMessageButton.TabIndex = 5;
             this.sendMessageButton.Text = "Send";
             this.sendMessageButton.UseVisualStyleBackColor = true;
-            // 
-            // ChatForm
-            // 
+
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(884, 562);
@@ -372,7 +356,7 @@ namespace super_chainsaw_sharpChatClient
         private System.Windows.Forms.GroupBox newChatroomGroupBox;
         private System.Windows.Forms.Button createChatroomButton;
         private System.Windows.Forms.TextBox chatroomName;
-        private System.Windows.Forms.RichTextBox messages;
+        private AutoScrollingRichTextBox messages;
         private System.Windows.Forms.TextBox message;
         private System.Windows.Forms.Button sendMessageButton;
     }

@@ -30,6 +30,14 @@ namespace super_chainsaw_sharpChatClient
     }
 
     [Serializable]
+    public class ChatroomToCreate : ClientToServerMessage
+    {
+        public string Chatroom { get; }
+
+        public ChatroomToCreate(string chatroom) => Chatroom = chatroom;
+    }
+
+    [Serializable]
     public class ChatroomToJoin : ClientToServerMessage
     {
         public string Chatroom { get; }

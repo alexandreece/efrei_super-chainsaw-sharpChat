@@ -8,6 +8,9 @@ namespace super_chainsaw_sharpChatClient
         public delegate void statusChanged();
         public event statusChanged Started;
 
+        public delegate void chatroomMessageAppended(ChatroomMessageAppended chatroomMessageAppended);
+        public event chatroomMessageAppended ChatroomMessageAppended;
+
         private string hostname;
         private int port;
         TcpClient comm;
@@ -28,11 +31,15 @@ namespace super_chainsaw_sharpChatClient
                 switch (rcvMsg)
                 {
                     case ChatroomMessageAppended chatroomMessageAppended:
+                        ChatroomMessageAppended(chatroomMessageAppended);
                         break;
+
                     case AvailableChatroomsList availableChatroomsList:
                         break;
+
                     case ConnectionStatusNotification connectionStatusNotification:
                         break;
+
                     default:
                         throw new ArgumentOutOfRangeException(nameof(rcvMsg));
                 }
@@ -47,6 +54,16 @@ namespace super_chainsaw_sharpChatClient
         public void sendMessage(string message)
         {
             Net.sendMsg(comm.GetStream(), new MessageToAppend(message));
+        }
+
+        public void createChatroom(string chatroom)
+        {
+            Net.sendMsg(comm.GetStream(), new ChatroomToCreate(chatroom));
+        }
+
+        public void joinChatroom(string chatroom)
+        {
+            Net.sendMsg(comm.GetStream(), new ChatroomToJoin(chatroom));
         }
     }
 }

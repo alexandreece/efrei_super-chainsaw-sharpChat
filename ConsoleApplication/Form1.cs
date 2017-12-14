@@ -5,25 +5,12 @@ using System.Windows.Forms;
 
 namespace super_chainsaw_sharpChatClient
 {
-    public partial class ChatForm : Form
+    public sealed partial class ChatForm : Form
     {
         private Client client;
         private Server server;
 
-        private RtfWriter rtfWriter;
-        private Colors TextColors { get; }
-
-        private enum ColorNames
-        {// warning: these names must always match the order in which the colors are added to the list
-         // (RTF format is such that 0 is always black and the first color in the list is indexed by 1)
-
-            unused_color,// black
-            notification,// lightblue
-            technicalDetails,// grey
-            messageHeader,// darkblue
-            messageContent,// green
-            issueOrBadEnd// red
-        }
+        private MessagesWriter messagesWriter;
 
         public ChatForm()
         {
@@ -38,24 +25,20 @@ namespace super_chainsaw_sharpChatClient
   //          newServerPort.Maximum = 65000;
             newServerPort.Text = "8080";
             serverAddress.Text = "127.0.0.1";
-            TextColors = new Colors().add(new Color(20, 120, 150))// warning: upon modifying this list of colors,
-                                     .add(new Color(80, 80, 80))// also modify the enumeration of names so that
-                                     .add(new Color(20, 20, 100))// the names still match the colors in the list
-                                     .add(new Color(20, 100, 20))
-                                     .add(new Color(200, 20, 20));
         }
 
         private void ChatForm_Load(object sender, EventArgs e)
         {
-            rtfWriter = new RtfWriter(TextColors);
-
+            messagesWriter = new MessagesWriter();
+/*
             // below is a 'random' text for messages area's and RtfWriter's demonstration purposes ; wording of notifications in the final version may differ
-            messages.Rtf = rtfWriter.color((int)ColorNames.notification).text("Welcome in the newly created chatroom 'Default'.")
+            messages.Rtf = messagesWriter.color((int)ColorNames.notification).text("Welcome in the newly created chatroom 'Default'.")
                     .newline().color((int)ColorNames.technicalDetails).text("creator and hosting server: 'arnaud@127.0.0.1:8080'")
                     .newline().newline().color((int)ColorNames.messageHeader).text("arnaud @ 12:47")
                     .newline().color((int)ColorNames.messageContent).text("bonjour, monde !")
                     .newline().newline().color((int)ColorNames.notification).text("'arnaud@127.0.0.1:8080' was successfully connected")
                     .newline().newline().color((int)ColorNames.issueOrBadEnd).text("'arnaud' left the room").RtfText;
+*/
         }
 
         private void closing(object sender, FormClosingEventArgs e)
@@ -69,6 +52,11 @@ namespace super_chainsaw_sharpChatClient
             {
                 server = new Server(int.Parse(newServerPort.Text));// server = new Server((int)newServerPort.Value);
                 server.Started += serverStarted;
+                server.ChatroomAdded +=
+                    delegate(Chatroom chatroom)
+                    {
+                        chatroomsList.Items.Add(chatroom);
+                    };
                 new Thread(server.start).Start();
             }
             else
@@ -80,8 +68,8 @@ namespace super_chainsaw_sharpChatClient
 
         private void serverStarted()
         {
-            rtfWriter = new RtfWriter(TextColors);
-            messages.Rtf = rtfWriter.color(0).text("server started").RtfText;
+            messagesWriter = new MessagesWriter();
+            messages.Rtf = messagesWriter.color(0).text("server started").RtfText;
 
             if (serverPort.Text == "")
                 serverPort.Text = newServerPort.Text;// todo : (mostly) for the sake of ideology, replace set value with actual port declared by server in some event parameter
@@ -106,8 +94,8 @@ namespace super_chainsaw_sharpChatClient
             if (client == null)
                 client = new Client("127.0.0.1", 4455);
             new Thread(client.start).Start();
-            rtfWriter = new RtfWriter(TextColors);
-//            messages.Rtf = rtfWriter.color((int)ColorNames.green).text("Connected to \"").RtfText;
+            messagesWriter = new MessagesWriter();
+//            messages.Rtf = messagesWriter.color((int)ColorNames.green).text("Connected to \"").RtfText;
 
             try
             {
@@ -116,11 +104,11 @@ namespace super_chainsaw_sharpChatClient
             }
             catch (Exception)
             {
-                rtfWriter = new RtfWriter(TextColors);
-//                messages.Rtf = rtfWriter.color((int)ColorNames.red).text("Error connecting to \"").RtfText;
+                messagesWriter = new MessagesWriter();
+//                messages.Rtf = messagesWriter.color((int)ColorNames.red).text("Error connecting to \"").RtfText;
             }
 
-            messages.Rtf = rtfWriter.text(serverAddress.Text + ":" + serverPort.Text + "\".").RtfText;
+            messages.Rtf = messagesWriter.text(serverAddress.Text + ":" + serverPort.Text + "\".").RtfText;
         }
 
         private void envoyer_Click(object sender, EventArgs e)

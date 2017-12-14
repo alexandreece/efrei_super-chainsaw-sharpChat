@@ -9,7 +9,7 @@ namespace super_chainsaw_sharpChatClient
         public event chatroomMessageAppended ChatroomMessageAppended;
 
         public string name { get; }
-        private List<ChatroomMessageAppended> messages;
+        private List<ChatroomMessageAppended> messages = new List<ChatroomMessageAppended>();
 
         public Chatroom(string name) => this.name = name;
 
@@ -21,5 +21,7 @@ namespace super_chainsaw_sharpChatClient
 
             ChatroomMessageAppended(chatroomMessageAppended);
         }
+
+        public override string ToString() => name;// text shown in list boxes
     }
 }

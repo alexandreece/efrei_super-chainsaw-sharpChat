@@ -6,19 +6,39 @@ using System.Threading;
 
 namespace super_chainsaw_sharpChatClient
 {
+    public class Chatrooms : List<Chatroom>
+    {
+        public delegate void manageChatrooms(Chatroom chatroom);
+        public event manageChatrooms ChatroomAdded;
+
+        public new void Add(Chatroom chatroom)
+        {
+            base.Add(chatroom);
+            ChatroomAdded(chatroom);
+        }
+    }
+
     public class Server
     {
         public delegate void update();
         public event update Started;
 
+        public delegate void manageChatrooms(Chatroom chatroom);
+        public event manageChatrooms ChatroomAdded;
+
         private int port;
         private byte[] localhost = {127, 0, 0, 1};
 
-        private List<Chatroom> chatrooms;
+        private Chatrooms chatrooms = new Chatrooms();
         private List<Receiver> chattersNotChattingYet = new List<Receiver>();
-        private List<KeyValuePair<Receiver, Chatroom> > chatters;
+        private List<KeyValuePair<Receiver, Chatroom> > chatters = new List<KeyValuePair<Receiver, Chatroom> >();
 
-        public Server(int port) => this.port = port;
+        public Server(int port)
+        {
+            this.port = port;
+
+            chatrooms.ChatroomAdded += (Chatroom chatroom) => ChatroomAdded(chatroom);
+        }
 
         public void start()
         {
@@ -30,8 +50,13 @@ namespace super_chainsaw_sharpChatClient
             {
                 var comm = new Receiver(l.AcceptTcpClient());
                 chattersNotChattingYet.Add(comm);
+                comm.CreateChatroom +=
+                    delegate(string chatroom)
+                    {
+                        chatrooms.Add(new Chatroom(chatroom));// todo : store information that <comm> created this chatroom (print their username)
+                    };
                 comm.JoinChatroom +=
-                    delegate(Receiver receiver, string chatroomString)
+                    delegate(string chatroomString)
                     {
                         Chatroom chatroom = null;
                         {
@@ -42,16 +67,29 @@ namespace super_chainsaw_sharpChatClient
                                 throw new ArgumentNullException(nameof(chatroom));
                         }
 
-                        chattersNotChattingYet.Remove(receiver);// todo : also consider the case where the chatter was already in another chatroom
-                        chatters.Add(new KeyValuePair<Receiver, Chatroom>(receiver, chatroom));
+                        chattersNotChattingYet.Remove(comm);// todo : also consider the case where the chatter was already in another chatroom
+                        chatters.Add(new KeyValuePair<Receiver, Chatroom>(comm, chatroom));
 
                         chatroom.ChatroomMessageAppended +=
                             delegate(ChatroomMessageAppended appended)
                             {
+/* todo : must be wrong (check later) because every chatter already subscribed when joining the chatroom so no need to send with foreach (will send duplicates?)
                                 foreach (var chatter in chatters)
                                     if (chatter.Value == chatroom)
                                         Net.sendMsg(chatter.Key.comm.GetStream(), appended);
+*/                              Net.sendMsg(comm.comm.GetStream(), appended);
+// todo : chack if better to do this way (joining chatter subscribe to chatroom's signal) or chatroom's signal be handled in chatroom's creation handler and sending to chatters in list using foreach loop
+// considering the fact that the chatters must also be properly unsubscribed upon quitting chatroom in order to not get messages coming from several chatrooms at the same time
                             };
+                    };
+                comm.AppendMessage +=
+                    delegate(MessageToAppend messageToAppend)
+                    {
+                        foreach (var chatter in chatters)
+                            if (chatter.Key == comm)
+                            {
+                                chatter.Value.addMessage(comm.username, messageToAppend.Message);
+                            }
                     };
                 new Thread(comm.doOperation).Start();
             }
@@ -59,10 +97,16 @@ namespace super_chainsaw_sharpChatClient
 
         class Receiver
         {
-            public delegate void joinChatroom(Receiver receiver, string chatroom);
-            public event joinChatroom JoinChatroom;
+            public delegate void manageChatroom(string chatroom);
+            public event manageChatroom CreateChatroom;
+            public event manageChatroom JoinChatroom;
+
+            public delegate void appendMessage(MessageToAppend messageToAppend);
+            public event appendMessage AppendMessage;
 
             public TcpClient comm { get; }
+
+            public string username { get; }// todo : set this value so that messages sent by this chatter can be labeled with their username
 
             public Receiver(TcpClient s) => comm = s;
 
@@ -73,13 +117,21 @@ namespace super_chainsaw_sharpChatClient
                     var rcvMsg = Net.rcvMsg(comm.GetStream());
                     switch (rcvMsg)
                     {
-                        case ChatroomToJoin chatroomToJoin:
-                            JoinChatroom(this, chatroomToJoin.Chatroom);
-                            break;
                         case CredentialsToConnect credentialsToConnect:
                             break;
-                        case MessageToAppend messageToAppend:
+
+                        case ChatroomToCreate chatroomToCreate:
+                            CreateChatroom(chatroomToCreate.Chatroom);
                             break;
+
+                        case ChatroomToJoin chatroomToJoin:
+                            JoinChatroom(chatroomToJoin.Chatroom);
+                            break;
+
+                        case MessageToAppend messageToAppend:
+                            AppendMessage(messageToAppend);
+                            break;
+
                         default:
                             throw new ArgumentOutOfRangeException(nameof(rcvMsg));
                     }
