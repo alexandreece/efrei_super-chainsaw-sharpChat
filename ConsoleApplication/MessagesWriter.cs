@@ -26,6 +26,17 @@ namespace super_chainsaw_sharpChatClient
                                                    .add(new Color(200, 20, 20)))
         { }
 
+        public MessagesWriter notify(string notification, string technicalDetails)
+        {
+            newline().newline().color((int) ColorNames.notification);
+            text(notification);
+                
+            newline().color((int) ColorNames.technicalDetails);
+            text(technicalDetails);
+
+            return this;
+        }
+
         public MessagesWriter usernameAtDate(string username, DateTime date)
         {
             bool sameMinute = (date.Year == lastDate.Year

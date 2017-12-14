@@ -43,21 +43,28 @@ namespace super_chainsaw_sharpChatClient
 
         public RtfWriter color(int colorIndex)
         {
-            RtfText += @"\cf" + colorIndex;
+            RtfText += @"\cf" + colorIndex + " ";
+
+            return this;
+        }
+
+        public RtfWriter fontSize(int fontSize)
+        {
+            RtfText += @"\fs" + fontSize + " ";
 
             return this;
         }
 
         public RtfWriter newline()
         {
-            RtfText += @"\par";
+            RtfText += @"\par ";
 
             return this;
         }
 
         public RtfWriter text(string text)
         {
-            RtfText += text;
+            RtfText += text.Replace(@"\", @"\\");
 
             return this;
         }

@@ -20,7 +20,7 @@ namespace super_chainsaw_sharpChatClient
 
     public class Server
     {
-        public delegate void update();
+        public delegate void update(int port);
         public event update Started;
 
         public delegate void manageChatrooms(Chatroom chatroom);
@@ -44,12 +44,22 @@ namespace super_chainsaw_sharpChatClient
         {
             var l = new TcpListener(new IPAddress(localhost), port);
             l.Start();
-            Started();
+            Started(port);
 
             while (true)
             {
                 var comm = new Receiver(l.AcceptTcpClient());
                 chattersNotChattingYet.Add(comm);
+                comm.ConnectChatter +=
+                    delegate(string username)
+                    {
+                        if (true /* todo : check if username is already taken */)
+                        {
+                            comm.username = username;
+                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.succesfullyConnected));
+                        }
+                        else Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken));
+                    };
                 comm.CreateChatroom +=
                     delegate(string chatroom)
                     {
@@ -97,6 +107,9 @@ namespace super_chainsaw_sharpChatClient
 
         class Receiver
         {
+            public delegate void connectChatter(string username);
+            public event connectChatter ConnectChatter;
+
             public delegate void manageChatroom(string chatroom);
             public event manageChatroom CreateChatroom;
             public event manageChatroom JoinChatroom;
@@ -106,7 +119,7 @@ namespace super_chainsaw_sharpChatClient
 
             public TcpClient comm { get; }
 
-            public string username { get; }// todo : set this value so that messages sent by this chatter can be labeled with their username
+            public string username { get; set; }
 
             public Receiver(TcpClient s) => comm = s;
 
@@ -118,6 +131,7 @@ namespace super_chainsaw_sharpChatClient
                     switch (rcvMsg)
                     {
                         case CredentialsToConnect credentialsToConnect:
+                            ConnectChatter(credentialsToConnect.Username);
                             break;
 
                         case ChatroomToCreate chatroomToCreate:

@@ -51,7 +51,15 @@ namespace super_chainsaw_sharpChatClient
             if (server == null)
             {
                 server = new Server(int.Parse(newServerPort.Text));// server = new Server((int)newServerPort.Value);
-                server.Started += serverStarted;
+                server.Started +=
+                    delegate(int port)
+                    {
+                        messagesWriter = new MessagesWriter();
+                        messages.Rtf = messagesWriter.notify("server started", "on port " + port).RtfText;
+
+                        if (serverPort.Text == "")
+                            serverPort.Text = port.ToString();
+                    };
                 server.ChatroomAdded +=
                     delegate(Chatroom chatroom)
                     {
@@ -64,15 +72,6 @@ namespace super_chainsaw_sharpChatClient
                 server.stop();
                 server = null;
             }
-        }
-
-        private void serverStarted()
-        {
-            messagesWriter = new MessagesWriter();
-            messages.Rtf = messagesWriter.color(0).text("server started").RtfText;
-
-            if (serverPort.Text == "")
-                serverPort.Text = newServerPort.Text;// todo : (mostly) for the sake of ideology, replace set value with actual port declared by server in some event parameter
         }
 
         private void Form1_SizeChanged(object sender, EventArgs e)

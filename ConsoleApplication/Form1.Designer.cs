@@ -57,16 +57,27 @@ namespace super_chainsaw_sharpChatClient
                     if (client == null)
                     {
                         client = new Client(serverAddress.Text, int.Parse(serverPort.Text));// Client(address, (int)serverPort.Value);
-                        client.Started +=
-                            delegate()
+                        client.Connecting +=
+                            delegate(string hostname, int port)
+                            {
+                                client.sendUsername(username.Text);
+                            };
+                        client.Connected +=
+                            delegate(string hostname, int port)
                             {
                                 messagesWriter = new MessagesWriter();
-                                messages.Rtf = messagesWriter.color(0).text("server started").RtfText;
+                                messages.Rtf = messagesWriter.notify("client connected", hostname + ":" + port).RtfText;
+                            };
+                        client.UsernameAlreadyTaken +=
+                            delegate(string hostname, int port)
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Rtf = messagesWriter.notify("connection failed", "username already taken").RtfText;
                             };
                         client.ChatroomMessageAppended +=
                             delegate(ChatroomMessageAppended chatroomMessageAppended)
                             {
-                                var username = chatroomMessageAppended.Username;// todo : check why username is not set and fix that so that username always prints on screen
+                                var username = chatroomMessageAppended.Username;
                                 DateTime dateAdded = chatroomMessageAppended.DateAdded;
                                 var message = chatroomMessageAppended.Message;
 

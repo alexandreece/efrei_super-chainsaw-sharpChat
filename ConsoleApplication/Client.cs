@@ -5,8 +5,10 @@ namespace super_chainsaw_sharpChatClient
 {
     class Client
     {
-        public delegate void statusChanged();
-        public event statusChanged Started;
+        public delegate void statusChanged(string hostname, int port);
+        public event statusChanged Connecting;// server waiting for username
+        public event statusChanged Connected;
+        public event statusChanged UsernameAlreadyTaken;
 
         public delegate void chatroomMessageAppended(ChatroomMessageAppended chatroomMessageAppended);
         public event chatroomMessageAppended ChatroomMessageAppended;
@@ -24,7 +26,7 @@ namespace super_chainsaw_sharpChatClient
         public void start()
         {
             comm = new TcpClient(hostname, port);
-            Started();
+            Connecting(hostname, port);
             while (true)
             {
                 var rcvMsg = Net.rcvMsg(comm.GetStream());
@@ -38,6 +40,19 @@ namespace super_chainsaw_sharpChatClient
                         break;
 
                     case ConnectionStatusNotification connectionStatusNotification:
+                        switch (connectionStatusNotification.Status)
+                        {
+                            case ConnectionStatusNotification.connectionStatus.succesfullyConnected:
+                                Connected(hostname, port);
+                                break;
+
+                            case ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken:
+                                UsernameAlreadyTaken(hostname, port);
+                                break;
+
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
                         break;
 
                     default:
@@ -49,6 +64,11 @@ namespace super_chainsaw_sharpChatClient
         public void stop()
         {
             // todo : disconnect client, stop infinite loops and send notification signal to write RTF message
+        }
+
+        public void sendUsername(string username)
+        {
+            Net.sendMsg(comm.GetStream(), new CredentialsToConnect(username, ""));
         }
 
         public void sendMessage(string message)
