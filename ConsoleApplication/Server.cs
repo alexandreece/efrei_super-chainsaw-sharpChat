@@ -36,9 +36,9 @@ namespace super_chainsaw_sharpChatClient
                 delegate
                 {
                     foreach (var chatterNotChattingYet in chattersNotChattingYet)
-                        Net.sendMsg(chatterNotChattingYet.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
+                        chatterNotChattingYet.send(new AvailableChatroomsList(chatrooms.names()));
                     foreach (var chatter in chatters)
-                        Net.sendMsg(chatter.Key.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
+                        chatter.Key.send(new AvailableChatroomsList(chatrooms.names()));
                 };
         }
 
@@ -69,15 +69,15 @@ namespace super_chainsaw_sharpChatClient
                         }
 
                         if (usernameAlreadyTaken)
-                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken));
+                            comm.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken));
                         else if (username.Length == 0)
-                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameCannotBeEmpty));
+                            comm.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameCannotBeEmpty));
                         else
                         {
                             comm.username = username;
                             ChatterPending(comm);
 
-                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.pendingConnection));
+                            comm.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.pendingConnection));
                         }
                     };
                 comm.CreateChatroom +=
@@ -91,7 +91,7 @@ namespace super_chainsaw_sharpChatClient
                             {
                                 foreach (var chatter in chatters)
                                     if (chatter.Value == chatroom)
-                                        Net.sendMsg(chatter.Key.comm.GetStream(), appended);
+                                        chatter.Key.send(appended);
                             };
                     };
                 comm.JoinChatroom +=
@@ -138,18 +138,18 @@ namespace super_chainsaw_sharpChatClient
             public delegate void appendMessage(MessageToAppend messageToAppend);
             public event appendMessage AppendMessage;
 
-            public TcpClient comm { get; }
+            private readonly TcpClient _comm;
 
             public string username { get; set; }
             public Chatroom chatroom { get; set; }
 
-            public Receiver(TcpClient s) => comm = s;
+            public Receiver(TcpClient s) => _comm = s;
 
             public void doOperation()
             {
                 while (true)
                 {
-                    var rcvMsg = Net.rcvMsg(comm.GetStream());
+                    var rcvMsg = Net.rcvMsg(_comm.GetStream());
                     switch (rcvMsg)
                     {
                         case CredentialsToConnect credentialsToConnect:
@@ -175,6 +175,11 @@ namespace super_chainsaw_sharpChatClient
             }
 
             public override string ToString() => username + (chatroom == null ? "" : " (" + chatroom + ")");// text shown in notifications and list boxes
+
+            public void send(SerealizedMessage serealizedMessage)
+            {
+                Net.sendMsg(_comm.GetStream(), serealizedMessage);
+            }
         }
 
         public void stop()
@@ -192,8 +197,8 @@ namespace super_chainsaw_sharpChatClient
             chattersNotChattingYet.Add(receiver);
             ChatterAccepted(receiver);
 
-            Net.sendMsg(receiver.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.successfullyConnected));
-            Net.sendMsg(receiver.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
+            receiver.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.successfullyConnected));
+            receiver.send(new AvailableChatroomsList(chatrooms.names()));
         }
     }
 }
