@@ -74,6 +74,9 @@ namespace super_chainsaw_sharpChatClient
                             {
                                 messagesWriter = new MessagesWriter();
                                 messages.Rtf = messagesWriter.notify("connection failed", "username already taken").RtfText;
+
+                                client.stop();
+                                client = null;
                             };
                         client.ServerChatroomsList +=
                             delegate(List<string> serverChatroomsList)

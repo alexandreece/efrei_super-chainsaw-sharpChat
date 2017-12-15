@@ -49,13 +49,24 @@ namespace super_chainsaw_sharpChatClient
                 comm.ConnectChatter +=
                     delegate(string username)
                     {
-                        if (true /* todo : check if username is already taken */)
+                        bool usernameAlreadyTaken = false;
+                        {
+                            foreach (var chatterNotChattingYet in chattersNotChattingYet)
+                                if (chatterNotChattingYet.username == username)
+                                    usernameAlreadyTaken = true;
+                            foreach (var chatter in chatters)
+                                if (chatter.Key.username == username)
+                                    usernameAlreadyTaken = true;
+                        }
+
+                        if (usernameAlreadyTaken)
+                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken));
+                        else
                         {
                             comm.username = username;
                             Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.successfullyConnected));
                             Net.sendMsg(comm.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
                         }
-                        else Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken));
                     };
                 comm.CreateChatroom +=
                     delegate(string chatroom)
