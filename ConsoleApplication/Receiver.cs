@@ -1,0 +1,64 @@
+﻿using System;
+using System.Net.Sockets;
+
+namespace super_chainsaw_sharpChatClient
+{
+    public partial class Server
+    {
+        public class Receiver
+        {
+            public delegate void connectChatter(string username);
+            public event connectChatter ConnectChatter;
+
+            public delegate void manageChatroom(string chatroom);
+            public event manageChatroom CreateChatroom;
+            public event manageChatroom JoinChatroom;
+
+            public delegate void appendMessage(MessageToAppend messageToAppend);
+            public event appendMessage AppendMessage;
+
+            private readonly TcpClient _comm;
+
+            public string username { get; set; }
+            public Chatroom chatroom { get; set; }
+
+            public Receiver(TcpClient s) => _comm = s;
+
+            public void doOperation()
+            {
+                while (true)
+                {
+                    var rcvMsg = Net.rcvMsg(_comm.GetStream());
+                    switch (rcvMsg)
+                    {
+                        case CredentialsToConnect credentialsToConnect:
+                            ConnectChatter(credentialsToConnect.Username);
+                            break;
+
+                        case ChatroomToCreate chatroomToCreate:
+                            CreateChatroom(chatroomToCreate.Chatroom);
+                            break;
+
+                        case ChatroomToJoin chatroomToJoin:
+                            JoinChatroom(chatroomToJoin.Chatroom);
+                            break;
+
+                        case MessageToAppend messageToAppend:
+                            AppendMessage(messageToAppend);
+                            break;
+
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(rcvMsg));
+                    }
+                }
+            }
+
+            public override string ToString() => username + (chatroom == null ? "" : " (" + chatroom + ")");// text shown in notifications and list boxes
+
+            public void send(SerealizedMessage serealizedMessage)
+            {
+                Net.sendMsg(_comm.GetStream(), serealizedMessage);
+            }
+        }
+    }
+}
