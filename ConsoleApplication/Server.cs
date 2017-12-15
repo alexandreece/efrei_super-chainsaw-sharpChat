@@ -69,9 +69,18 @@ namespace super_chainsaw_sharpChatClient
                         }
                     };
                 comm.CreateChatroom +=
-                    delegate(string chatroom)
+                    delegate(string chatroomName)
                     {
-                        chatrooms.Add(new Chatroom(chatroom));// todo : store information that <comm> created this chatroom (print their username)
+                        var chatroom = new Chatroom(chatroomName);
+                        chatrooms.Add(chatroom);// todo : store information that <comm> created this chatroom (print their username)
+
+                        chatroom.ChatroomMessageAppended +=
+                            delegate(ChatroomMessageAppended appended)
+                            {
+                                foreach (var chatter in chatters)
+                                    if (chatter.Value == chatroom)
+                                        Net.sendMsg(chatter.Key.comm.GetStream(), appended);
+                            };
                     };
                 comm.JoinChatroom +=
                     delegate(string chatroomString)
@@ -80,20 +89,14 @@ namespace super_chainsaw_sharpChatClient
                         if (chatroom == null)
                             throw new ArgumentNullException(nameof(chatroom));
 
-                        chattersNotChattingYet.Remove(comm);// todo : also consider the case where the chatter was already in another chatroom
-                        chatters.Add(new KeyValuePair<Receiver, Chatroom>(comm, chatroom));
-
-                        chatroom.ChatroomMessageAppended +=
-                            delegate(ChatroomMessageAppended appended)
+                        chattersNotChattingYet.Remove(comm);
+                        foreach (var chatter in chatters)
+                            if (chatter.Key == comm)
                             {
-/* todo : must be wrong (check later) because every chatter already subscribed when joining the chatroom so no need to send with foreach (will send duplicates?)
-                                foreach (var chatter in chatters)
-                                    if (chatter.Value == chatroom)
-                                        Net.sendMsg(chatter.Key.comm.GetStream(), appended);
-*/                              Net.sendMsg(comm.comm.GetStream(), appended);
-// todo : chack if better to do this way (joining chatter subscribe to chatroom's signal) or chatroom's signal be handled in chatroom's creation handler and sending to chatters in list using foreach loop
-// considering the fact that the chatters must also be properly unsubscribed upon quitting chatroom in order to not get messages coming from several chatrooms at the same time
-                            };
+                                chatters.Remove(chatter);
+                                break;
+                            }
+                        chatters.Add(new KeyValuePair<Receiver, Chatroom>(comm, chatroom));
                     };
                 comm.AppendMessage +=
                     delegate(MessageToAppend messageToAppend)
