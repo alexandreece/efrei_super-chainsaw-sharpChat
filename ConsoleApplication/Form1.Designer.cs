@@ -117,7 +117,9 @@ namespace super_chainsaw_sharpChatClient
             sendMessageButton.Click +=
                 delegate(object sender, EventArgs args)
                 {
-                    client.sendMessage(message.Text);
+                    foreach (var message in message.Lines)
+                        client.sendMessage(message);
+                    message.Clear();
                 };
             this.connectedClientsGroupBox.SuspendLayout();
             this.ChatroomsGroupBox.SuspendLayout();
