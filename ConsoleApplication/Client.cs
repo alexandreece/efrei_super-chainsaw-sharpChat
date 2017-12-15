@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Sockets;
 
 namespace super_chainsaw_sharpChatClient
@@ -12,6 +13,9 @@ namespace super_chainsaw_sharpChatClient
 
         public delegate void chatroomMessageAppended(ChatroomMessageAppended chatroomMessageAppended);
         public event chatroomMessageAppended ChatroomMessageAppended;
+
+        public delegate void serverChatroomsList(List<string> serverChatroomsList);
+        public event serverChatroomsList ServerChatroomsList;
 
         private string hostname;
         private int port;
@@ -32,17 +36,10 @@ namespace super_chainsaw_sharpChatClient
                 var rcvMsg = Net.rcvMsg(comm.GetStream());
                 switch (rcvMsg)
                 {
-                    case ChatroomMessageAppended chatroomMessageAppended:
-                        ChatroomMessageAppended(chatroomMessageAppended);
-                        break;
-
-                    case AvailableChatroomsList availableChatroomsList:
-                        break;
-
                     case ConnectionStatusNotification connectionStatusNotification:
                         switch (connectionStatusNotification.Status)
                         {
-                            case ConnectionStatusNotification.connectionStatus.succesfullyConnected:
+                            case ConnectionStatusNotification.connectionStatus.successfullyConnected:
                                 Connected(hostname, port);
                                 break;
 
@@ -53,6 +50,14 @@ namespace super_chainsaw_sharpChatClient
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }
+                        break;
+
+                    case AvailableChatroomsList availableChatroomsList:
+                        ServerChatroomsList(availableChatroomsList.Chatrooms);
+                        break;
+
+                    case ChatroomMessageAppended chatroomMessageAppended:
+                        ChatroomMessageAppended(chatroomMessageAppended);
                         break;
 
                     default:

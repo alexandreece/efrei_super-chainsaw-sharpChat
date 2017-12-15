@@ -60,7 +60,7 @@ namespace super_chainsaw_sharpChatClient
     {
         public enum connectionStatus
         {
-            succesfullyConnected,
+            successfullyConnected,
             usernameAlreadyTaken,
             usernameNotFound,
             wrongPassword

@@ -55,15 +55,14 @@ namespace super_chainsaw_sharpChatClient
                     delegate(int port)
                     {
                         messagesWriter = new MessagesWriter();
-                        messages.Rtf = messagesWriter.notify("server started", "on port " + port).RtfText;
-
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server started", "on port " + port).RtfText));
                         if (serverPort.Text == "")
-                            serverPort.Text = port.ToString();
+                            serverPort.Invoke(new Action(() => serverPort.Text = port.ToString()));
                     };
                 server.ChatroomAdded +=
                     delegate(Chatroom chatroom)
                     {
-                        chatroomsList.Items.Add(chatroom);
+//                        chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(chatroom)));
                     };
                 new Thread(server.start).Start();
             }

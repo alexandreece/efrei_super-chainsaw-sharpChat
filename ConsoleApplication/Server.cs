@@ -16,6 +16,24 @@ namespace super_chainsaw_sharpChatClient
             base.Add(chatroom);
             ChatroomAdded(chatroom);
         }
+
+        public List<string> names()
+        {
+            List<string> chatroomsNames = new List<string>();
+            foreach (var chatroom in this)
+                chatroomsNames.Add(chatroom.name);
+
+            return chatroomsNames;
+        }
+
+        public Chatroom fromName(string chatroomString)
+        {
+            foreach (var chatroom in this)
+                if (chatroom.name == chatroomString)
+                    return chatroom;
+
+            return null;
+        }
     }
 
     public class Server
@@ -37,7 +55,15 @@ namespace super_chainsaw_sharpChatClient
         {
             this.port = port;
 
-            chatrooms.ChatroomAdded += (Chatroom chatroom) => ChatroomAdded(chatroom);
+            chatrooms.ChatroomAdded += chatroom => ChatroomAdded(chatroom);
+            chatrooms.ChatroomAdded +=
+                delegate
+                {
+                    foreach (var chatterNotChattingYet in chattersNotChattingYet)
+                        Net.sendMsg(chatterNotChattingYet.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
+                    foreach (var chatter in chatters)
+                        Net.sendMsg(chatter.Key.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
+                };
         }
 
         public void start()
@@ -56,7 +82,8 @@ namespace super_chainsaw_sharpChatClient
                         if (true /* todo : check if username is already taken */)
                         {
                             comm.username = username;
-                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.succesfullyConnected));
+                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.successfullyConnected));
+                            Net.sendMsg(comm.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
                         }
                         else Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken));
                     };
@@ -68,14 +95,9 @@ namespace super_chainsaw_sharpChatClient
                 comm.JoinChatroom +=
                     delegate(string chatroomString)
                     {
-                        Chatroom chatroom = null;
-                        {
-                            foreach (var c in chatrooms)
-                                if (c.name == chatroomString)
-                                    chatroom = c;
-                            if (chatroom == null)
-                                throw new ArgumentNullException(nameof(chatroom));
-                        }
+                        Chatroom chatroom = chatrooms.fromName(chatroomString);
+                        if (chatroom == null)
+                            throw new ArgumentNullException(nameof(chatroom));
 
                         chattersNotChattingYet.Remove(comm);// todo : also consider the case where the chatter was already in another chatroom
                         chatters.Add(new KeyValuePair<Receiver, Chatroom>(comm, chatroom));

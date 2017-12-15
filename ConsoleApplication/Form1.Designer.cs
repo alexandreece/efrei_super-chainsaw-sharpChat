@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -66,13 +67,20 @@ namespace super_chainsaw_sharpChatClient
                             delegate(string hostname, int port)
                             {
                                 messagesWriter = new MessagesWriter();
-                                messages.Rtf = messagesWriter.notify("client connected", hostname + ":" + port).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client connected", hostname + ":" + port).RtfText));
                             };
                         client.UsernameAlreadyTaken +=
                             delegate(string hostname, int port)
                             {
                                 messagesWriter = new MessagesWriter();
                                 messages.Rtf = messagesWriter.notify("connection failed", "username already taken").RtfText;
+                            };
+                        client.ServerChatroomsList +=
+                            delegate(List<string> serverChatroomsList)
+                            {
+                                chatroomsList.Items.Clear();
+                                foreach (var serverChatroom in serverChatroomsList)
+                                    chatroomsList.Items.Add(serverChatroom);
                             };
                         client.ChatroomMessageAppended +=
                             delegate(ChatroomMessageAppended chatroomMessageAppended)
