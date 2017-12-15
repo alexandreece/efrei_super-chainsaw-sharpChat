@@ -69,6 +69,15 @@ namespace super_chainsaw_sharpChatClient
                                 messagesWriter = new MessagesWriter();
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client connected", hostname + ":" + port).RtfText));
                             };
+                        client.UsernameCannotBeEmpty +=
+                            delegate(string hostname, int port)
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Rtf = messagesWriter.notify("connection failed", "username cannot be empty").RtfText;
+
+                                client.stop();
+                                client = null;
+                            };
                         client.UsernameAlreadyTaken +=
                             delegate(string hostname, int port)
                             {

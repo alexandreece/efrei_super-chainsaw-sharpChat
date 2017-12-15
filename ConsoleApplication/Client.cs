@@ -10,6 +10,7 @@ namespace super_chainsaw_sharpChatClient
         public event statusChanged Connecting;// server waiting for username
         public event statusChanged Connected;
         public event statusChanged UsernameAlreadyTaken;
+        public event statusChanged UsernameCannotBeEmpty;
 
         public delegate void chatroomMessageAppended(ChatroomMessageAppended chatroomMessageAppended);
         public event chatroomMessageAppended ChatroomMessageAppended;
@@ -43,6 +44,10 @@ namespace super_chainsaw_sharpChatClient
                                 Connected(hostname, port);
                                 break;
 
+                            case ConnectionStatusNotification.connectionStatus.usernameCannotBeEmpty:
+                                UsernameCannotBeEmpty(hostname, port);
+                                break;
+
                             case ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken:
                                 UsernameAlreadyTaken(hostname, port);
                                 break;
@@ -68,6 +73,7 @@ namespace super_chainsaw_sharpChatClient
 
         public void stop()
         {
+            // todo : send notification to server so that it releases the username for future chatters
             // todo : disconnect client, stop infinite loops and send notification signal to write RTF message
         }
 

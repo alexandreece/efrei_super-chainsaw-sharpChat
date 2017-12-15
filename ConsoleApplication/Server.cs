@@ -61,6 +61,8 @@ namespace super_chainsaw_sharpChatClient
 
                         if (usernameAlreadyTaken)
                             Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken));
+                        else if (username.Length == 0)
+                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.usernameCannotBeEmpty));
                         else
                         {
                             comm.username = username;
