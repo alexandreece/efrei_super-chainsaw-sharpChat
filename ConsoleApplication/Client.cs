@@ -9,6 +9,7 @@ namespace super_chainsaw_sharpChatClient
         public delegate void statusChanged(string hostname, int port);
         public event statusChanged Connecting;// server waiting for username
         public event statusChanged Connected;
+        public event statusChanged Pending;
         public event statusChanged UsernameAlreadyTaken;
         public event statusChanged UsernameCannotBeEmpty;
 
@@ -50,6 +51,10 @@ namespace super_chainsaw_sharpChatClient
 
                             case ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken:
                                 UsernameAlreadyTaken(hostname, port);
+                                break;
+
+                            case ConnectionStatusNotification.connectionStatus.pendingConnection:
+                                Pending(hostname, port);
                                 break;
 
                             default:

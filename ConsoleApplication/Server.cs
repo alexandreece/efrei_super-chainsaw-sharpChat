@@ -11,6 +11,10 @@ namespace super_chainsaw_sharpChatClient
         public delegate void update(int port);
         public event update Started;
 
+        public delegate void chatterUpdate(Receiver receiver);
+        public event chatterUpdate ChatterPending;
+        public event chatterUpdate ChatterAccepted;
+
         public delegate void manageChatrooms(Chatroom chatroom);
         public event manageChatrooms ChatroomAdded;
 
@@ -18,6 +22,7 @@ namespace super_chainsaw_sharpChatClient
         private byte[] localhost = {127, 0, 0, 1};
 
         private Chatrooms chatrooms = new Chatrooms();
+        private List<Receiver> pendingConnections = new List<Receiver>();
         private List<Receiver> chattersNotChattingYet = new List<Receiver>();
         private List<KeyValuePair<Receiver, Chatroom> > chatters = new List<KeyValuePair<Receiver, Chatroom> >();
 
@@ -45,12 +50,15 @@ namespace super_chainsaw_sharpChatClient
             while (true)
             {
                 var comm = new Receiver(l.AcceptTcpClient());
-                chattersNotChattingYet.Add(comm);
+                pendingConnections.Add(comm);
                 comm.ConnectChatter +=
                     delegate(string username)
                     {
                         bool usernameAlreadyTaken = false;
                         {
+                            foreach (var pendingConnection in pendingConnections)
+                                if (pendingConnection.username == username)
+                                    usernameAlreadyTaken = true;
                             foreach (var chatterNotChattingYet in chattersNotChattingYet)
                                 if (chatterNotChattingYet.username == username)
                                     usernameAlreadyTaken = true;
@@ -66,8 +74,9 @@ namespace super_chainsaw_sharpChatClient
                         else
                         {
                             comm.username = username;
-                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.successfullyConnected));
-                            Net.sendMsg(comm.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
+                            ChatterPending(comm);
+
+                            Net.sendMsg(comm.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.pendingConnection));
                         }
                     };
                 comm.CreateChatroom +=
@@ -113,7 +122,7 @@ namespace super_chainsaw_sharpChatClient
             }
         }
 
-        class Receiver
+        public class Receiver
         {
             public delegate void connectChatter(string username);
             public event connectChatter ConnectChatter;
@@ -159,12 +168,27 @@ namespace super_chainsaw_sharpChatClient
                     }
                 }
             }
+
+            public override string ToString() => username;// text shown in notifications and list boxes
         }
 
         public void stop()
         {
             // todo : send notification then disconnect every client then delete TCP server
             // todo : check what happens with the infinite while loops
+        }
+
+        public void acceptConnection(object chatter)
+        {
+            if (!(chatter is Receiver receiver))
+                return;
+
+            pendingConnections.Remove(receiver);
+            chattersNotChattingYet.Add(receiver);
+            ChatterAccepted(receiver);
+
+            Net.sendMsg(receiver.comm.GetStream(), new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.successfullyConnected));
+            Net.sendMsg(receiver.comm.GetStream(), new AvailableChatroomsList(chatrooms.names()));
         }
     }
 }

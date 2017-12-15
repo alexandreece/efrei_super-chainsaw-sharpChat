@@ -22,6 +22,6 @@ namespace super_chainsaw_sharpChatClient
             ChatroomMessageAppended(chatroomMessageAppended);
         }
 
-        public override string ToString() => name;// text shown in list boxes
+        public override string ToString() => name;// text shown in notifications and list boxes
     }
 }

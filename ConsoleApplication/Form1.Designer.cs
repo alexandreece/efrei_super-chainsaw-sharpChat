@@ -69,6 +69,12 @@ namespace super_chainsaw_sharpChatClient
                                 messagesWriter = new MessagesWriter();
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client connected", hostname + ":" + port).RtfText));
                             };
+                        client.Pending +=
+                            delegate(string hostname, int port)
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client pending", hostname + ":" + port).RtfText));
+                            };
                         client.UsernameCannotBeEmpty +=
                             delegate(string hostname, int port)
                             {
@@ -123,6 +129,11 @@ namespace super_chainsaw_sharpChatClient
             this.rejectPendingConnectionButton = new System.Windows.Forms.Button();
             this.pendingConnections = new System.Windows.Forms.ListBox();
             this.acceptPendingConnectionButton = new System.Windows.Forms.Button();
+            acceptPendingConnectionButton.Click +=
+                delegate(object sender, EventArgs args)
+                {
+                    server.acceptConnection(pendingConnections.SelectedItem);
+                };
             this.messages = new AutoScrollingRichTextBox();
             this.message = new System.Windows.Forms.TextBox();
             this.sendMessageButton = new System.Windows.Forms.Button();

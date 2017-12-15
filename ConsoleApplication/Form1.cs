@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -56,12 +57,32 @@ namespace super_chainsaw_sharpChatClient
                     {
                         messagesWriter = new MessagesWriter();
                         messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server started", "on port " + port).RtfText));
-                        if (serverPort.Text == "")
+                        if (serverPort.Text.Length == 0)
                             serverPort.Invoke(new Action(() => serverPort.Text = port.ToString()));
+                    };
+                server.ChatterPending +=
+                    delegate(Server.Receiver receiver)
+                    {
+                        pendingConnections.Items.Add(receiver);
+                        StringBuilder pendingConnectionsList = new StringBuilder();
+                        foreach (var pendingConnection in pendingConnections.Items)
+                            if (pendingConnection != receiver)
+                                pendingConnectionsList.Append(pendingConnection).Append(", ");
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("new pending connection for '" + receiver + "'", pendingConnectionsList.ToString().Length == 0 ? "" : "there are other pending connections: " + pendingConnectionsList.ToString()).RtfText));
+                    };
+                server.ChatterAccepted +=
+                    delegate(Server.Receiver receiver)
+                    {
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "accepted: '" + receiver + "' now connected").RtfText));
+
+                        pendingConnections.Items.Remove(receiver);
+                        connectedClientsList.Items.Add(receiver);
                     };
                 server.ChatroomAdded +=
                     delegate(Chatroom chatroom)
                     {
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroom + "' created").RtfText));
+
 //                        chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(chatroom)));
                     };
                 new Thread(server.start).Start();

@@ -63,6 +63,7 @@ namespace super_chainsaw_sharpChatClient
             successfullyConnected,
             usernameCannotBeEmpty,
             usernameAlreadyTaken,
+            pendingConnection,
             usernameNotFound,
             wrongPassword
         }
