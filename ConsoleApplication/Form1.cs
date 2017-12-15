@@ -78,6 +78,14 @@ namespace super_chainsaw_sharpChatClient
                         pendingConnections.Items.Remove(receiver);
                         connectedClientsList.Items.Add(receiver);
                     };
+                server.ChatterChangedChatroom +=
+                    delegate(Server.Receiver receiver)
+                    {
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "'" + receiver.username + "' now in chatroom '" + receiver.chatroom + "'").RtfText));
+
+                        connectedClientsList.Items.Remove(receiver);
+                        connectedClientsList.Items.Add(receiver);
+                    };
                 server.ChatroomAdded +=
                     delegate(Chatroom chatroom)
                     {

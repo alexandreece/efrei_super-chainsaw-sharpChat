@@ -40,13 +40,15 @@ namespace super_chainsaw_sharpChatClient
                 delegate(object sender, EventArgs args)
                 {
                     client.createChatroom(chatroomName.Text);
+                    chatroomName.Clear();
                 };
             this.chatroomName = new System.Windows.Forms.TextBox();
             this.chatroomsList = new System.Windows.Forms.ListBox();
             chatroomsList.SelectedIndexChanged +=
                 delegate(object sender, EventArgs args)
                 {
-                    client.joinChatroom(chatroomsList.SelectedItem.ToString());
+                    if (chatroomsList.SelectedItem != null)
+                        client.joinChatroom(chatroomsList.SelectedItem.ToString());
                 };
             this.connectionGroupBox = new System.Windows.Forms.GroupBox();
             this.colonLabel = new System.Windows.Forms.Label();

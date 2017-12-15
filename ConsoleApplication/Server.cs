@@ -14,6 +14,7 @@ namespace super_chainsaw_sharpChatClient
         public delegate void chatterUpdate(Receiver receiver);
         public event chatterUpdate ChatterPending;
         public event chatterUpdate ChatterAccepted;
+        public event chatterUpdate ChatterChangedChatroom;
 
         public delegate void manageChatrooms(Chatroom chatroom);
         public event manageChatrooms ChatroomAdded;
@@ -108,6 +109,9 @@ namespace super_chainsaw_sharpChatClient
                                 break;
                             }
                         chatters.Add(new KeyValuePair<Receiver, Chatroom>(comm, chatroom));
+
+                        comm.chatroom = chatroom;
+                        ChatterChangedChatroom(comm);
                     };
                 comm.AppendMessage +=
                     delegate(MessageToAppend messageToAppend)
@@ -137,6 +141,7 @@ namespace super_chainsaw_sharpChatClient
             public TcpClient comm { get; }
 
             public string username { get; set; }
+            public Chatroom chatroom { get; set; }
 
             public Receiver(TcpClient s) => comm = s;
 
@@ -169,7 +174,7 @@ namespace super_chainsaw_sharpChatClient
                 }
             }
 
-            public override string ToString() => username;// text shown in notifications and list boxes
+            public override string ToString() => username + (chatroom == null ? "" : " (" + chatroom + ")");// text shown in notifications and list boxes
         }
 
         public void stop()
