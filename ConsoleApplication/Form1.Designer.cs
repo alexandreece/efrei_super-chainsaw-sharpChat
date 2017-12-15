@@ -121,7 +121,8 @@ namespace super_chainsaw_sharpChatClient
                 delegate(object sender, EventArgs args)
                 {
                     foreach (var message in message.Lines)
-                        client.sendMessage(message);
+                        if (message.Length > 0)
+                            client.sendMessage(message);
                     message.Clear();
                 };
             this.connectedClientsGroupBox.SuspendLayout();
