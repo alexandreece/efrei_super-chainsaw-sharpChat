@@ -82,24 +82,29 @@ namespace super_chainsaw_sharpChatClient
             // todo : disconnect client, stop infinite loops and send notification signal to write RTF message
         }
 
+        private void send(SerealizedMessage serealizedMessage)
+        {
+            Net.sendMsg(comm.GetStream(), serealizedMessage);
+        }
+
         public void sendUsername(string username)
         {
-            Net.sendMsg(comm.GetStream(), new CredentialsToConnect(username, ""));
+            send(new CredentialsToConnect(username, ""));
         }
 
         public void sendMessage(string message)
         {
-            Net.sendMsg(comm.GetStream(), new MessageToAppend(message));
+            send(new MessageToAppend(message));
         }
 
         public void createChatroom(string chatroom)
         {
-            Net.sendMsg(comm.GetStream(), new ChatroomToCreate(chatroom));
+            send(new ChatroomToCreate(chatroom));
         }
 
         public void joinChatroom(string chatroom)
         {
-            Net.sendMsg(comm.GetStream(), new ChatroomToJoin(chatroom));
+            send(new ChatroomToJoin(chatroom));
         }
     }
 }
