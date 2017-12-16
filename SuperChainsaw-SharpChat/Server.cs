@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 
-namespace super_chainsaw_sharpChatClient
+namespace SuperChainsaw_SharpChat
 {
     public partial class Server
     {

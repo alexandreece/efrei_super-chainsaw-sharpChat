@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace super_chainsaw_sharpChatClient
+namespace SuperChainsaw_SharpChat
 {
     class AutoScrollingRichTextBox : RichTextBox
     {

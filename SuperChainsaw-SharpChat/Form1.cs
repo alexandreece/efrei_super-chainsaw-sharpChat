@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace super_chainsaw_sharpChatClient
+namespace SuperChainsaw_SharpChat
 {
     public sealed partial class ChatForm : Form
     {
