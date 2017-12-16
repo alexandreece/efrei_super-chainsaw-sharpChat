@@ -35,7 +35,7 @@ namespace super_chainsaw_sharpChatClient
             Connecting(hostname, port);
             while (true)
             {
-                var rcvMsg = Net.rcvMsg(comm.GetStream());
+                var rcvMsg = SerealizedMessage.readFrom(comm.GetStream());
                 switch (rcvMsg)
                 {
                     case ConnectionStatusNotification connectionStatusNotification:
@@ -84,7 +84,7 @@ namespace super_chainsaw_sharpChatClient
 
         private void send(SerealizedMessage serealizedMessage)
         {
-            Net.sendMsg(comm.GetStream(), serealizedMessage);
+            serealizedMessage.writeTo(comm.GetStream());
         }
 
         public void sendUsername(string username)

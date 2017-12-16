@@ -28,7 +28,7 @@ namespace super_chainsaw_sharpChatClient
             {
                 while (true)
                 {
-                    var rcvMsg = Net.rcvMsg(_comm.GetStream());
+                    var rcvMsg = SerealizedMessage.readFrom(_comm.GetStream());
                     switch (rcvMsg)
                     {
                         case CredentialsToConnect credentialsToConnect:
@@ -57,7 +57,7 @@ namespace super_chainsaw_sharpChatClient
 
             public void send(SerealizedMessage serealizedMessage)
             {
-                Net.sendMsg(_comm.GetStream(), serealizedMessage);
+                serealizedMessage.writeTo(_comm.GetStream());
             }
         }
     }

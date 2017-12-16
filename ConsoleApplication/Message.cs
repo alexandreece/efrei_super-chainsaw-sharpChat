@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace super_chainsaw_sharpChatClient
 {
-    public interface SerealizedMessage
+    [Serializable]
+    public abstract class SerealizedMessage
     {
-        string ToString();
+        public void writeTo(Stream s) => new BinaryFormatter().Serialize(s, this);
+
+        public static SerealizedMessage readFrom(Stream s) => (SerealizedMessage) new BinaryFormatter().Deserialize(s);
     }
 
-    public interface ClientToServerMessage : SerealizedMessage
+    [Serializable]
+    public abstract class ClientToServerMessage : SerealizedMessage
     {
     }
 
-    public interface ServerToClientMessage : SerealizedMessage
+    [Serializable]
+    public abstract class ServerToClientMessage : SerealizedMessage
     {
     }
 
