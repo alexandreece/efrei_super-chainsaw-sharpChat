@@ -154,7 +154,7 @@ namespace SuperChainsaw_SharpChat.UI
             transferServerButton.Name = "transferServerButton";
             transferServerButton.Size = new Size(104, 23);
             transferServerButton.TabIndex = 2;
-            transferServerButton.Text = "Transfer server to";
+            transferServerButton.Text = "Transfer server";
             transferServerButton.UseVisualStyleBackColor = true;
 
             disconnectClientButton.Location = new Point(6, 265);
@@ -348,7 +348,7 @@ namespace SuperChainsaw_SharpChat.UI
             Controls.Add(connectionGroupBox);
             Controls.Add(ChatroomsGroupBox);
             Name = "ChatForm";
-            Text = "Form1";
+            Text = "SuperChainsaw SharpChat";
             Load += ChatForm_Load;
             FormClosing += closing;
             connectedClientsGroupBox.ResumeLayout(false);
@@ -364,30 +364,31 @@ namespace SuperChainsaw_SharpChat.UI
             PerformLayout();
         }
 
-        private GroupBox connectedClientsGroupBox;
-        private ListBox connectedClientsList;
-        private GroupBox ChatroomsGroupBox;
-        private ListBox chatroomsList;
-        private GroupBox connectionGroupBox;
-        private Label colonLabel;
-        private Label atLabel;
-        private Button connectDisconnectClientButton;
-        private TextBox serverPort;
-        private TextBox serverAddress;
-        private TextBox username;
+        // identations represent layouts
         private GroupBox serverGroupBox;
-        private GroupBox pendingConnectionsGroupBox;
-        private Button rejectPendingConnectionButton;
-        private ListBox pendingConnections;
-        private Button acceptPendingConnectionButton;
-        private Button transferServerButton;
-        private Button disconnectClientButton;
-        private Button startStopServerButton;
-        private TextBox newServerPort;// private System.Windows.Forms.NumericUpDown newServerPort;
-        private Button removeChatroom;
-        private GroupBox newChatroomGroupBox;
-        private Button createChatroomButton;
-        private TextBox chatroomName;
+            private TextBox newServerPort;// private System.Windows.Forms.NumericUpDown newServerPort;
+            private Button startStopServerButton;
+            private GroupBox pendingConnectionsGroupBox;
+                private ListBox pendingConnections;
+                private Button acceptPendingConnectionButton;
+                private Button rejectPendingConnectionButton;
+            private GroupBox connectedClientsGroupBox;
+                private ListBox connectedClientsList;
+                private Button disconnectClientButton;
+                private Button transferServerButton;
+        private GroupBox ChatroomsGroupBox;
+            private GroupBox newChatroomGroupBox;
+                private TextBox chatroomName;
+                private Button createChatroomButton;
+            private ListBox chatroomsList;
+            private Button removeChatroom;
+        private GroupBox connectionGroupBox;
+            private TextBox username;
+            private Label atLabel;
+            private TextBox serverAddress;
+            private Label colonLabel;
+            private TextBox serverPort;
+            private Button connectDisconnectClientButton;
         private AutoScrollingRichTextBox messages;
         private TextBox message;
         private Button sendMessageButton;
@@ -400,16 +401,147 @@ namespace SuperChainsaw_SharpChat.UI
         public ChatForm()
         {
             InitializeComponent();
-            Text = "SuperChainsaw SharpChat";
 
-            placeControls();
-            SizeChanged += Form1_SizeChanged;
+            SizeChanged += delegate { placeControls(); };
+            MinimumSize = new Size(887, 370);// todo : resolve flickering than occurs without this line or find a way to compute those values dynamically
 
             client = null;
 //            newServerPort.Minimum = 1000;
-            //          newServerPort.Maximum = 65000;
+//            newServerPort.Maximum = 65000;
             newServerPort.Text = "8080";
             serverAddress.Text = "127.0.0.1";
+        }
+
+        private void placeControls()
+        {// todo : this code works but is still under work (to be finished) because there are still constants in the locations and sizes
+
+            const int innerFormMargin = 13;
+            const int interControlMargin = 6;
+            const int innerTopGroupBoxMargin = 19;
+            const int innerTopGroupBoxEmptyMargin = 12;
+            const int innerTopGroupBoxLabelMargin = 22;
+
+            const int groupBoxWidth = 200;
+            const int listBoxMinHeight = 17; // warning : this size allows the list box to display only one line, and it can't display anything when it is smaller than that
+            const int controlHeight = 23; // todo : only 20 for fields, 23 only for buttons
+
+            var width = ClientSize.Width;
+            var height = ClientSize.Height;
+
+            var nextX = innerFormMargin;
+            var nextY = innerFormMargin;
+
+            serverGroupBox.Location = new Point(nextX, nextY);
+            serverGroupBox.Size = new Size(groupBoxWidth, height - 2 * innerFormMargin);
+            nextX += serverGroupBox.Width + interControlMargin;
+            {
+                var nextServerGroupBoxX = interControlMargin;
+                var nextServerGroupBoxY = innerTopGroupBoxMargin;
+                newServerPort.Location = new Point(nextServerGroupBoxX, nextServerGroupBoxY);
+                newServerPort.Size = new Size(100, 20);
+                nextServerGroupBoxX += newServerPort.Width + interControlMargin;
+                startStopServerButton.Location = new Point(nextServerGroupBoxX, 17);
+                startStopServerButton.Size = new Size(75, 23);
+                nextServerGroupBoxX = interControlMargin;
+                nextServerGroupBoxY += newServerPort.Height + interControlMargin;
+                pendingConnectionsGroupBox.Location = new Point(nextServerGroupBoxX, nextServerGroupBoxY);
+                pendingConnectionsGroupBox.Size = new Size(serverGroupBox.Width - 2 * interControlMargin, (serverGroupBox.Height - newServerPort.Height - 3 * interControlMargin - innerTopGroupBoxMargin) * 2 / 7);
+                nextServerGroupBoxY += pendingConnectionsGroupBox.Height + interControlMargin;
+                {
+                    var nextPendingConnectionsGroupBoxX = interControlMargin;
+                    var nextPendingConnectionsGroupBoxY = innerTopGroupBoxMargin;
+                    pendingConnections.Location = new Point(nextPendingConnectionsGroupBoxX, nextPendingConnectionsGroupBoxY);
+                    int pendingConnectionsHeight = pendingConnectionsGroupBox.Height - acceptPendingConnectionButton.Height - 2 * interControlMargin - innerTopGroupBoxMargin;
+                    pendingConnections.Size = new Size(pendingConnectionsGroupBox.Width - 2 * interControlMargin, pendingConnectionsHeight);
+                    if (pendingConnectionsHeight < listBoxMinHeight)
+                        ClientSize = new Size(ClientSize.Width, height + (listBoxMinHeight - pendingConnectionsHeight));
+                    nextPendingConnectionsGroupBoxY += pendingConnections.Height + interControlMargin;
+                    acceptPendingConnectionButton.Location = new Point(nextPendingConnectionsGroupBoxX, nextPendingConnectionsGroupBoxY);
+                    acceptPendingConnectionButton.Size = new Size(75, 23);
+                    nextPendingConnectionsGroupBoxX += acceptPendingConnectionButton.Width + interControlMargin;
+                    rejectPendingConnectionButton.Location = new Point(nextPendingConnectionsGroupBoxX, nextPendingConnectionsGroupBoxY);
+                    rejectPendingConnectionButton.Size = new Size(75, 23);
+                }
+                connectedClientsGroupBox.Location = new Point(nextServerGroupBoxX, nextServerGroupBoxY);
+                connectedClientsGroupBox.Size = new Size(serverGroupBox.Width - 2 * interControlMargin, (serverGroupBox.Height - newServerPort.Height - 3 * interControlMargin - innerTopGroupBoxMargin) * 5 / 7);
+                {
+                    var nextConnectedClientsGroupBoxX = interControlMargin;
+                    var nextConnectedClientsGroupBoxY = innerTopGroupBoxMargin;
+                    connectedClientsList.Location = new Point(nextConnectedClientsGroupBoxX, nextConnectedClientsGroupBoxY);
+                    connectedClientsList.Size = new Size(connectedClientsGroupBox.Width - 2 * interControlMargin, connectedClientsGroupBox.Height - disconnectClientButton.Height - 2 * interControlMargin - innerTopGroupBoxMargin);
+                    nextConnectedClientsGroupBoxY += connectedClientsList.Height + interControlMargin;
+                    disconnectClientButton.Location = new Point(nextConnectedClientsGroupBoxX, nextConnectedClientsGroupBoxY);
+                    disconnectClientButton.Size = new Size(75, 23);
+                    nextConnectedClientsGroupBoxX += disconnectClientButton.Width + interControlMargin;
+                    transferServerButton.Location = new Point(nextConnectedClientsGroupBoxX, nextConnectedClientsGroupBoxY);
+                    transferServerButton.Size = new Size(95, 23);
+                }
+            }
+            ChatroomsGroupBox.Location = new Point(nextX, nextY);
+            ChatroomsGroupBox.Size = new Size(groupBoxWidth, height - 2 * innerFormMargin);
+            nextX += ChatroomsGroupBox.Width + interControlMargin;
+            {
+                int nextChatroomsGroupBoxX = interControlMargin;
+                int nextChatroomsGroupBoxY = innerTopGroupBoxEmptyMargin;
+                newChatroomGroupBox.Location = new Point(nextChatroomsGroupBoxX, nextChatroomsGroupBoxY);
+                newChatroomGroupBox.Size = new Size(187, 72);
+                nextChatroomsGroupBoxY += newChatroomGroupBox.Height + interControlMargin;
+                {
+                    int nextNewChatroomGroupBoxX = interControlMargin;
+                    int nextNewChatroomGroupBoxY = innerTopGroupBoxEmptyMargin;
+                    chatroomName.Location = new Point(nextNewChatroomGroupBoxX, nextNewChatroomGroupBoxY);
+                    chatroomName.Size = new Size(174, 20);
+                    nextNewChatroomGroupBoxY += chatroomName.Height + interControlMargin;
+                    createChatroomButton.Location = new Point(nextNewChatroomGroupBoxX, nextNewChatroomGroupBoxY);
+                    createChatroomButton.Size = new Size(174, 23);
+                }
+                chatroomsList.Location = new Point(nextChatroomsGroupBoxX, nextChatroomsGroupBoxY);
+                chatroomsList.Size = new Size(188, ChatroomsGroupBox.Height - newChatroomGroupBox.Height - removeChatroom.Height - innerTopGroupBoxEmptyMargin - 3 * interControlMargin);
+                nextChatroomsGroupBoxY += chatroomsList.Height + interControlMargin;
+                removeChatroom.Location = new Point(nextChatroomsGroupBoxX, nextChatroomsGroupBoxY);
+                removeChatroom.Size = new Size(188, 23);
+            }
+            var connectionGroupBoxWidth = width - serverGroupBox.Width - ChatroomsGroupBox.Width - 2 * interControlMargin - 2 * innerFormMargin;
+            connectionGroupBox.Location = new Point(nextX, nextY);
+            connectionGroupBox.Size = new Size(connectionGroupBoxWidth, innerTopGroupBoxMargin + controlHeight + interControlMargin);
+            nextY += connectionGroupBox.Height + interControlMargin;
+            {
+                int nextConnectionGroupBoxX = interControlMargin;
+                int nextConnectionGroupBoxY = innerTopGroupBoxMargin;
+                username.Location = new Point(interControlMargin, innerTopGroupBoxMargin);
+                username.Size = new Size(119, 20);
+                nextConnectionGroupBoxX += username.Width;
+                atLabel.Location = new Point(nextConnectionGroupBoxX, innerTopGroupBoxLabelMargin);
+                atLabel.Size = new Size(18, 13);
+                nextConnectionGroupBoxX += atLabel.Width;
+                serverAddress.Location = new Point(nextConnectionGroupBoxX, innerTopGroupBoxMargin);
+                serverAddress.Size = new Size(88, 20);
+                nextConnectionGroupBoxX += serverAddress.Width;
+                colonLabel.Location = new Point(nextConnectionGroupBoxX, innerTopGroupBoxLabelMargin);
+                colonLabel.Size = new Size(10, 13);
+                nextConnectionGroupBoxX += colonLabel.Width;
+                serverPort.Location = new Point(nextConnectionGroupBoxX, innerTopGroupBoxMargin);
+                serverPort.Size = new Size(44, 20);
+                nextConnectionGroupBoxX += serverPort.Width + interControlMargin;
+                connectDisconnectClientButton.Location = new Point(nextConnectionGroupBoxX, 17);
+                var connectDisconnectClientButtonWidth = connectionGroupBoxWidth - username.Width - atLabel.Width - serverAddress.Width - colonLabel.Width - serverPort.Width - 3 * interControlMargin;
+                if (connectDisconnectClientButtonWidth < 136)
+                    connectDisconnectClientButtonWidth = 136;
+                connectDisconnectClientButton.Size = new Size(connectDisconnectClientButtonWidth, 23);
+                nextConnectionGroupBoxX += connectDisconnectClientButton.Width + interControlMargin;
+                if (connectionGroupBoxWidth < nextConnectionGroupBoxX)
+                    ClientSize = new Size(width + (nextConnectionGroupBoxX - connectionGroupBoxWidth), ClientSize.Height);
+            }
+            messages.Location = new Point(nextX, nextY);
+            messages.Size = new Size(connectionGroupBoxWidth, (height - connectionGroupBox.Height - sendMessageButton.Height - 3 * interControlMargin - 2 * innerFormMargin) * 5 / 7);
+            nextY += messages.Height + interControlMargin;
+            message.Location = new Point(nextX, nextY);
+            message.Size = new Size(connectionGroupBoxWidth, (height - connectionGroupBox.Height - sendMessageButton.Height - 3 * interControlMargin - 2 * innerFormMargin) * 2 / 7);
+            nextY += message.Height + interControlMargin;
+            sendMessageButton.Location = new Point(nextX, nextY);
+            sendMessageButton.Size = new Size(connectionGroupBoxWidth, controlHeight);
+            nextX += sendMessageButton.Width + interControlMargin;
+            nextY += sendMessageButton.Height + interControlMargin;
         }
 
         private void ChatForm_Load(object sender, EventArgs e)
@@ -484,18 +616,6 @@ namespace SuperChainsaw_SharpChat.UI
                 server.stop();
                 server = null;
             }
-        }
-
-        private void Form1_SizeChanged(object sender, EventArgs e)
-        {
-            placeControls();
-        }
-
-        private void placeControls()
-        {
-            // todo : place here the lines that place and size the controls
-            // todo : + resize appropriate controls according to new form size
-            // todo : + add conditions on minimum height and width and resize form if it became too small
         }
 
         private void connect_Click(object sender, EventArgs e)
