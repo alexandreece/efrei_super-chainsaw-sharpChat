@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using SuperChainsaw_SharpChat.Net.Messages;
 
-namespace SuperChainsaw_SharpChat
+namespace SuperChainsaw_SharpChat.Net
 {
     public class Chatroom
     {

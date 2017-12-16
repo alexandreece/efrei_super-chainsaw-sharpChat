@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using SuperChainsaw_SharpChat.Net.Messages;
 
-namespace SuperChainsaw_SharpChat
+namespace SuperChainsaw_SharpChat.Net
 {
     public partial class Server
     {

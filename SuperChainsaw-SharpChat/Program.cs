@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using SuperChainsaw_SharpChat.UI;
 
 namespace SuperChainsaw_SharpChat
 {

@@ -1,0 +1,542 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Text;
+using System.Threading;
+using System.Windows.Forms;
+using SuperChainsaw_SharpChat.Net;
+using SuperChainsaw_SharpChat.Net.Messages;
+
+namespace SuperChainsaw_SharpChat.UI
+{
+    public sealed class ChatForm : Form
+    {
+        private void InitializeComponent()
+        {
+            connectedClientsGroupBox = new GroupBox();
+            transferServerButton = new Button();
+            disconnectClientButton = new Button();
+            connectedClientsList = new ListBox();
+            ChatroomsGroupBox = new GroupBox();
+            removeChatroom = new Button();
+            newChatroomGroupBox = new GroupBox();
+            createChatroomButton = new Button();
+            createChatroomButton.Click +=
+                delegate
+                {
+                    client.createChatroom(chatroomName.Text);
+                    chatroomName.Clear();
+                };
+            chatroomName = new TextBox();
+            chatroomsList = new ListBox();
+            chatroomsList.SelectedIndexChanged +=
+                delegate
+                {
+                    if (chatroomsList.SelectedItem != null)
+                        client.joinChatroom(chatroomsList.SelectedItem.ToString());
+                };
+            connectionGroupBox = new GroupBox();
+            colonLabel = new Label();
+            atLabel = new Label();
+            connectDisconnectClientButton = new Button();
+            connectDisconnectClientButton.Click +=
+                delegate
+                {
+                    if (client == null)
+                    {
+                        client = new Client(serverAddress.Text, int.Parse(serverPort.Text));// Client(address, (int)serverPort.Value);
+                        client.Connecting +=
+                            delegate
+                            {
+                                client.sendUsername(username.Text);
+                            };
+                        client.Connected +=
+                            delegate(string hostname, int port)
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client connected", hostname + ":" + port).RtfText));
+                            };
+                        client.Pending +=
+                            delegate(string hostname, int port)
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client pending", hostname + ":" + port).RtfText));
+                            };
+                        client.UsernameCannotBeEmpty +=
+                            delegate
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Rtf = messagesWriter.notify("connection failed", "username cannot be empty").RtfText;
+
+                                client.stop();
+                                client = null;
+                            };
+                        client.UsernameAlreadyTaken +=
+                            delegate
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Rtf = messagesWriter.notify("connection failed", "username already taken").RtfText;
+
+                                client.stop();
+                                client = null;
+                            };
+                        client.ServerChatroomsList +=
+                            delegate(List<string> serverChatroomsList)
+                            {
+                                chatroomsList.Items.Clear();
+                                foreach (var serverChatroom in serverChatroomsList)
+                                    chatroomsList.Items.Add(serverChatroom);
+                            };
+                        client.ChatroomMessageAppended +=
+                            delegate(ChatroomMessageAppended chatroomMessageAppended)
+                            {
+                                var username = chatroomMessageAppended.Username;
+                                DateTime dateAdded = chatroomMessageAppended.DateAdded;
+                                var message = chatroomMessageAppended.Message;
+
+                                messages.Rtf = messagesWriter.usernameAtDate(username, dateAdded)
+                                                             .message(message).RtfText;
+                            };
+                        new Thread(client.start).Start();
+                    }
+                    else
+                    {
+                        client.stop();
+                        client = null;
+                    }
+                };
+            serverPort = new TextBox();
+            serverAddress = new TextBox();
+            this.username = new TextBox();
+            serverGroupBox = new GroupBox();
+            startStopServerButton = new Button();
+            startStopServerButton.Click += startStopServer;
+            newServerPort = new TextBox();// this.newServerPort = new System.Windows.Forms.NumericUpDown();
+            pendingConnectionsGroupBox = new GroupBox();
+            rejectPendingConnectionButton = new Button();
+            pendingConnections = new ListBox();
+            acceptPendingConnectionButton = new Button();
+            acceptPendingConnectionButton.Click +=
+                delegate
+                {
+                    server.acceptConnection(pendingConnections.SelectedItem);
+                };
+            messages = new AutoScrollingRichTextBox();
+            this.message = new TextBox();
+            sendMessageButton = new Button();
+            sendMessageButton.Click +=
+                delegate
+                {
+                    foreach (var message in message.Lines)
+                        if (message.Length > 0)
+                            client.sendMessage(message);
+                    message.Clear();
+                };
+            connectedClientsGroupBox.SuspendLayout();
+            ChatroomsGroupBox.SuspendLayout();
+            newChatroomGroupBox.SuspendLayout();
+            connectionGroupBox.SuspendLayout();
+            serverGroupBox.SuspendLayout();
+            pendingConnectionsGroupBox.SuspendLayout();
+            SuspendLayout();
+
+            connectedClientsGroupBox.Controls.Add(transferServerButton);
+            connectedClientsGroupBox.Controls.Add(disconnectClientButton);
+            connectedClientsGroupBox.Controls.Add(connectedClientsList);
+            connectedClientsGroupBox.Location = new Point(8, 237);
+            connectedClientsGroupBox.Name = "connectedClientsGroupBox";
+            connectedClientsGroupBox.Size = new Size(200, 294);
+            connectedClientsGroupBox.TabIndex = 0;
+            connectedClientsGroupBox.TabStop = false;
+            connectedClientsGroupBox.Text = "Connected clients";
+
+            transferServerButton.Location = new Point(87, 265);
+            transferServerButton.Name = "transferServerButton";
+            transferServerButton.Size = new Size(104, 23);
+            transferServerButton.TabIndex = 2;
+            transferServerButton.Text = "Transfer server to";
+            transferServerButton.UseVisualStyleBackColor = true;
+
+            disconnectClientButton.Location = new Point(6, 265);
+            disconnectClientButton.Name = "disconnectClientButton";
+            disconnectClientButton.Size = new Size(75, 23);
+            disconnectClientButton.TabIndex = 1;
+            disconnectClientButton.Text = "Disconnect";
+            disconnectClientButton.UseVisualStyleBackColor = true;
+
+            connectedClientsList.FormattingEnabled = true;
+            connectedClientsList.Location = new Point(7, 19);
+            connectedClientsList.Name = "connectedClientsList";
+            connectedClientsList.Size = new Size(187, 238);
+            connectedClientsList.TabIndex = 0;
+
+            ChatroomsGroupBox.Controls.Add(removeChatroom);
+            ChatroomsGroupBox.Controls.Add(newChatroomGroupBox);
+            ChatroomsGroupBox.Controls.Add(chatroomsList);
+            ChatroomsGroupBox.Location = new Point(233, 17);
+            ChatroomsGroupBox.Name = "ChatroomsGroupBox";
+            ChatroomsGroupBox.Size = new Size(200, 533);
+            ChatroomsGroupBox.TabIndex = 0;
+            ChatroomsGroupBox.TabStop = false;
+            ChatroomsGroupBox.Text = "Active chatrooms";
+
+            removeChatroom.Location = new Point(6, 498);
+            removeChatroom.Name = "removeChatroom";
+            removeChatroom.Size = new Size(188, 23);
+            removeChatroom.TabIndex = 2;
+            removeChatroom.Text = "Remove";
+            removeChatroom.UseVisualStyleBackColor = true;
+
+            newChatroomGroupBox.Controls.Add(createChatroomButton);
+            newChatroomGroupBox.Controls.Add(chatroomName);
+            newChatroomGroupBox.Location = new Point(7, 20);
+            newChatroomGroupBox.Name = "newChatroomGroupBox";
+            newChatroomGroupBox.Size = new Size(187, 72);
+            newChatroomGroupBox.TabIndex = 1;
+            newChatroomGroupBox.TabStop = false;
+
+            createChatroomButton.Location = new Point(7, 37);
+            createChatroomButton.Name = "createChatroomButton";
+            createChatroomButton.Size = new Size(174, 23);
+            createChatroomButton.TabIndex = 1;
+            createChatroomButton.Text = "Create chatroom";
+            createChatroomButton.UseVisualStyleBackColor = true;
+
+            chatroomName.Location = new Point(7, 11);
+            chatroomName.Name = "chatroomName";
+            chatroomName.Size = new Size(174, 20);
+            chatroomName.TabIndex = 0;
+
+            chatroomsList.FormattingEnabled = true;
+            chatroomsList.Location = new Point(6, 98);
+            chatroomsList.Name = "chatroomsList";
+            chatroomsList.Size = new Size(188, 394);
+            chatroomsList.TabIndex = 0;
+
+            connectionGroupBox.Controls.Add(colonLabel);
+            connectionGroupBox.Controls.Add(atLabel);
+            connectionGroupBox.Controls.Add(connectDisconnectClientButton);
+            connectionGroupBox.Controls.Add(serverPort);
+            connectionGroupBox.Controls.Add(serverAddress);
+            connectionGroupBox.Controls.Add(this.username);
+            connectionGroupBox.Location = new Point(439, 17);
+            connectionGroupBox.Name = "connectionGroupBox";
+            connectionGroupBox.Size = new Size(433, 51);
+            connectionGroupBox.TabIndex = 1;
+            connectionGroupBox.TabStop = false;
+            connectionGroupBox.Text = "username @ address : port";
+
+            colonLabel.AutoSize = true;
+            colonLabel.Location = new Point(231, 22);
+            colonLabel.Name = "colonLabel";
+            colonLabel.Size = new Size(10, 13);
+            colonLabel.TabIndex = 5;
+            colonLabel.Text = ":";
+
+            atLabel.AutoSize = true;
+            atLabel.Location = new Point(125, 22);
+            atLabel.Name = "atLabel";
+            atLabel.Size = new Size(18, 13);
+            atLabel.TabIndex = 4;
+            atLabel.Text = "@";
+
+            connectDisconnectClientButton.Location = new Point(291, 17);
+            connectDisconnectClientButton.Name = "connectDisconnectClientButton";
+            connectDisconnectClientButton.Size = new Size(136, 23);
+            connectDisconnectClientButton.TabIndex = 3;
+            connectDisconnectClientButton.Text = "Connect / Disconnect";
+            connectDisconnectClientButton.UseVisualStyleBackColor = true;
+
+            serverPort.Location = new Point(241, 19);
+            serverPort.Name = "serverPort";
+            serverPort.Size = new Size(44, 20);
+            serverPort.TabIndex = 2;
+
+            serverAddress.Location = new Point(143, 19);
+            serverAddress.Name = "serverAddress";
+            serverAddress.Size = new Size(88, 20);
+            serverAddress.TabIndex = 1;
+            serverAddress.TextAlign = HorizontalAlignment.Center;
+
+            this.username.Location = new Point(6, 19);
+            this.username.Name = "username";
+            this.username.Size = new Size(119, 20);
+            this.username.TabIndex = 0;
+            this.username.TextAlign = HorizontalAlignment.Right;
+
+            serverGroupBox.Controls.Add(startStopServerButton);
+            serverGroupBox.Controls.Add(newServerPort);
+            serverGroupBox.Controls.Add(pendingConnectionsGroupBox);
+            serverGroupBox.Controls.Add(connectedClientsGroupBox);
+            serverGroupBox.Location = new Point(13, 13);
+            serverGroupBox.Name = "serverGroupBox";
+            serverGroupBox.Size = new Size(214, 537);
+            serverGroupBox.TabIndex = 2;
+            serverGroupBox.TabStop = false;
+            serverGroupBox.Text = "Server";
+
+            startStopServerButton.Location = new Point(112, 17);
+            startStopServerButton.Name = "startStopServerButton";
+            startStopServerButton.Size = new Size(75, 23);
+            startStopServerButton.TabIndex = 2;
+            startStopServerButton.Text = "Start / Stop";
+            startStopServerButton.UseVisualStyleBackColor = true;
+
+            newServerPort.Location = new Point(6, 19);
+            newServerPort.Name = "newServerPort";
+            newServerPort.Size = new Size(100, 20);
+            newServerPort.TabIndex = 1;
+
+            pendingConnectionsGroupBox.Controls.Add(rejectPendingConnectionButton);
+            pendingConnectionsGroupBox.Controls.Add(pendingConnections);
+            pendingConnectionsGroupBox.Controls.Add(acceptPendingConnectionButton);
+            pendingConnectionsGroupBox.Location = new Point(6, 46);
+            pendingConnectionsGroupBox.Name = "pendingConnectionsGroupBox";
+            pendingConnectionsGroupBox.Size = new Size(200, 185);
+            pendingConnectionsGroupBox.TabIndex = 0;
+            pendingConnectionsGroupBox.TabStop = false;
+            pendingConnectionsGroupBox.Text = "Pending connections";
+
+            rejectPendingConnectionButton.Location = new Point(89, 146);
+            rejectPendingConnectionButton.Name = "rejectPendingConnectionButton";
+            rejectPendingConnectionButton.Size = new Size(75, 23);
+            rejectPendingConnectionButton.TabIndex = 2;
+            rejectPendingConnectionButton.Text = "Reject";
+            rejectPendingConnectionButton.UseVisualStyleBackColor = true;
+
+            pendingConnections.FormattingEnabled = true;
+            pendingConnections.Location = new Point(6, 19);
+            pendingConnections.Name = "pendingConnections";
+            pendingConnections.Size = new Size(187, 121);
+            pendingConnections.TabIndex = 0;
+
+            acceptPendingConnectionButton.Location = new Point(6, 146);
+            acceptPendingConnectionButton.Name = "acceptPendingConnectionButton";
+            acceptPendingConnectionButton.Size = new Size(75, 23);
+            acceptPendingConnectionButton.TabIndex = 1;
+            acceptPendingConnectionButton.Text = "Accept";
+            acceptPendingConnectionButton.UseVisualStyleBackColor = true;
+
+            messages.ForeColor = SystemColors.MenuHighlight;
+            messages.Location = new Point(445, 74);
+            messages.Name = "messages";
+            messages.ReadOnly = true;
+            messages.Size = new Size(427, 262);
+            messages.TabIndex = 3;
+            messages.Text = "arnaud@127.0.0.1:8080 was successfully connected";
+
+            this.message.Location = new Point(440, 343);
+            this.message.Multiline = true;
+            this.message.Name = "message";
+            this.message.Size = new Size(432, 177);
+            this.message.TabIndex = 4;
+
+            sendMessageButton.Location = new Point(445, 526);
+            sendMessageButton.Name = "sendMessageButton";
+            sendMessageButton.Size = new Size(427, 23);
+            sendMessageButton.TabIndex = 5;
+            sendMessageButton.Text = "Send";
+            sendMessageButton.UseVisualStyleBackColor = true;
+
+            AutoScaleDimensions = new SizeF(6F, 13F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(884, 562);
+            Controls.Add(sendMessageButton);
+            Controls.Add(this.message);
+            Controls.Add(messages);
+            Controls.Add(serverGroupBox);
+            Controls.Add(connectionGroupBox);
+            Controls.Add(ChatroomsGroupBox);
+            Name = "ChatForm";
+            Text = "Form1";
+            Load += ChatForm_Load;
+            FormClosing += closing;
+            connectedClientsGroupBox.ResumeLayout(false);
+            ChatroomsGroupBox.ResumeLayout(false);
+            newChatroomGroupBox.ResumeLayout(false);
+            newChatroomGroupBox.PerformLayout();
+            connectionGroupBox.ResumeLayout(false);
+            connectionGroupBox.PerformLayout();
+            serverGroupBox.ResumeLayout(false);
+            serverGroupBox.PerformLayout();
+            pendingConnectionsGroupBox.ResumeLayout(false);
+            ResumeLayout(false);
+            PerformLayout();
+        }
+
+        private GroupBox connectedClientsGroupBox;
+        private ListBox connectedClientsList;
+        private GroupBox ChatroomsGroupBox;
+        private ListBox chatroomsList;
+        private GroupBox connectionGroupBox;
+        private Label colonLabel;
+        private Label atLabel;
+        private Button connectDisconnectClientButton;
+        private TextBox serverPort;
+        private TextBox serverAddress;
+        private TextBox username;
+        private GroupBox serverGroupBox;
+        private GroupBox pendingConnectionsGroupBox;
+        private Button rejectPendingConnectionButton;
+        private ListBox pendingConnections;
+        private Button acceptPendingConnectionButton;
+        private Button transferServerButton;
+        private Button disconnectClientButton;
+        private Button startStopServerButton;
+        private TextBox newServerPort;// private System.Windows.Forms.NumericUpDown newServerPort;
+        private Button removeChatroom;
+        private GroupBox newChatroomGroupBox;
+        private Button createChatroomButton;
+        private TextBox chatroomName;
+        private AutoScrollingRichTextBox messages;
+        private TextBox message;
+        private Button sendMessageButton;
+
+        private Client client;
+        private Server server;
+
+        private MessagesWriter messagesWriter;
+
+        public ChatForm()
+        {
+            InitializeComponent();
+            Text = "SuperChainsaw SharpChat";
+
+            placeControls();
+            SizeChanged += Form1_SizeChanged;
+
+            client = null;
+//            newServerPort.Minimum = 1000;
+            //          newServerPort.Maximum = 65000;
+            newServerPort.Text = "8080";
+            serverAddress.Text = "127.0.0.1";
+        }
+
+        private void ChatForm_Load(object sender, EventArgs e)
+        {
+            messagesWriter = new MessagesWriter();
+/*
+            // below is a 'random' text for messages area's and RtfWriter's demonstration purposes ; wording of notifications in the final version may differ
+            messages.Rtf = messagesWriter.color((int)ColorNames.notification).text("Welcome in the newly created chatroom 'Default'.")
+                    .newline().color((int)ColorNames.technicalDetails).text("creator and hosting server: 'arnaud@127.0.0.1:8080'")
+                    .newline().newline().color((int)ColorNames.messageHeader).text("arnaud @ 12:47")
+                    .newline().color((int)ColorNames.messageContent).text("bonjour, monde !")
+                    .newline().newline().color((int)ColorNames.notification).text("'arnaud@127.0.0.1:8080' was successfully connected")
+                    .newline().newline().color((int)ColorNames.issueOrBadEnd).text("'arnaud' left the room").RtfText;
+*/
+        }
+
+        private void closing(object sender, FormClosingEventArgs e)
+        {
+            // todo : check if serveur or client are running and warn
+        }
+
+        private void startStopServer(object sender, EventArgs e)
+        {
+            if (server == null)
+            {
+                server = new Server(int.Parse(newServerPort.Text));// server = new Server((int)newServerPort.Value);
+                server.Started +=
+                    delegate(int port)
+                    {
+                        messagesWriter = new MessagesWriter();
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server started", "on port " + port).RtfText));
+                        if (serverPort.Text.Length == 0)
+                            serverPort.Invoke(new Action(() => serverPort.Text = port.ToString()));
+                    };
+                server.ChatterPending +=
+                    delegate(Server.Receiver receiver)
+                    {
+                        pendingConnections.Items.Add(receiver);
+                        StringBuilder pendingConnectionsList = new StringBuilder();
+                        foreach (var pendingConnection in pendingConnections.Items)
+                            if (pendingConnection != receiver)
+                                pendingConnectionsList.Append(pendingConnection).Append(", ");
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("new pending connection for '" + receiver + "'", pendingConnectionsList.ToString().Length == 0 ? "" : "there are other pending connections: " + pendingConnectionsList).RtfText));
+                    };
+                server.ChatterAccepted +=
+                    delegate(Server.Receiver receiver)
+                    {
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "accepted: '" + receiver + "' now connected").RtfText));
+
+                        pendingConnections.Items.Remove(receiver);
+                        connectedClientsList.Items.Add(receiver);
+                    };
+                server.ChatterChangedChatroom +=
+                    delegate(Server.Receiver receiver)
+                    {
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "'" + receiver.username + "' now in chatroom '" + receiver.chatroom + "'").RtfText));
+
+                        connectedClientsList.Items.Remove(receiver);
+                        connectedClientsList.Items.Add(receiver);
+                    };
+                server.ChatroomAdded +=
+                    delegate(Chatroom chatroom)
+                    {
+                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroom + "' created").RtfText));
+
+//                        chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(chatroom)));
+                    };
+                new Thread(server.start).Start();
+            }
+            else
+            {
+                server.stop();
+                server = null;
+            }
+        }
+
+        private void Form1_SizeChanged(object sender, EventArgs e)
+        {
+            placeControls();
+        }
+
+        private void placeControls()
+        {
+            // todo : place here the lines that place and size the controls
+            // todo : + resize appropriate controls according to new form size
+            // todo : + add conditions on minimum height and width and resize form if it became too small
+        }
+
+        private void connect_Click(object sender, EventArgs e)
+        {
+//            chatrooms.Items.Clear();
+
+            if (client == null)
+                client = new Client("127.0.0.1", 4455);
+            new Thread(client.start).Start();
+            messagesWriter = new MessagesWriter();
+//            messages.Rtf = messagesWriter.color((int)ColorNames.green).text("Connected to \"").RtfText;
+
+            try
+            {
+//                client.Connect(serverAddress.Text, Int32.Parse(serverPort.Text));
+                new Thread(Receive).Start();
+            }
+            catch (Exception)
+            {
+                messagesWriter = new MessagesWriter();
+//                messages.Rtf = messagesWriter.color((int)ColorNames.red).text("Error connecting to \"").RtfText;
+            }
+
+            messages.Rtf = messagesWriter.text(serverAddress.Text + ":" + serverPort.Text + "\".").RtfText;
+        }
+
+        private void envoyer_Click(object sender, EventArgs e)
+        {
+            var message = Encoding.ASCII.GetBytes(this.message.Text);
+//            client.GetStream().Write(message, 0, message.Length);
+        }
+
+        private void Receive()
+        {
+            while (Thread.CurrentThread.IsAlive)
+            {
+                var message = new Byte[256];
+//                client.GetStream().Read(message, 0, message.Length);
+
+                this.message.Text += Encoding.ASCII.GetString(message, 0, message.Length);
+            }
+        }
+    }
+}

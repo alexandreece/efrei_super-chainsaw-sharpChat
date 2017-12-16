@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using SuperChainsaw_SharpChat.Net.Messages;
 
-namespace SuperChainsaw_SharpChat
+namespace SuperChainsaw_SharpChat.Net
 {
     class Client
     {

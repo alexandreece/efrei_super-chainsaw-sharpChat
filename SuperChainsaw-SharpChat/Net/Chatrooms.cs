@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SuperChainsaw_SharpChat
+namespace SuperChainsaw_SharpChat.Net
 {
     public class Chatrooms : List<Chatroom>
     {

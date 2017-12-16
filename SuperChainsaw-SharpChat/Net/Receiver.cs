@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Net.Sockets;
+using SuperChainsaw_SharpChat.Net.Messages;
 
-namespace SuperChainsaw_SharpChat
+namespace SuperChainsaw_SharpChat.Net
 {
     public partial class Server
     {

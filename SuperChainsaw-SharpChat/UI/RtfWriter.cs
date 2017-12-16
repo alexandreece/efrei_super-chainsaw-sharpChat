@@ -1,31 +1,5 @@
-﻿using System.Collections.Generic;
-
-namespace SuperChainsaw_SharpChat
+﻿namespace SuperChainsaw_SharpChat.UI
 {
-    internal class Color
-    {
-        public int R { get; }
-        public int G { get; }
-        public int B { get; }
-
-        public Color(int r, int g, int b)
-        {
-            R = r;
-            G = g;
-            B = b;
-        }
-    }
-
-    internal class Colors : List<Color>
-    {
-        public Colors add(Color color)
-        {
-            Add(color);
-
-            return this;
-        }
-    }
-
     internal class RtfWriter
     {
         public string RtfText { get; private set; }

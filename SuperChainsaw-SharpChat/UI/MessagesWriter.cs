@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SuperChainsaw_SharpChat
+namespace SuperChainsaw_SharpChat.UI
 {
     internal class MessagesWriter : RtfWriter
     {
