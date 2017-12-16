@@ -6,20 +6,20 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace super_chainsaw_sharpChatClient
 {
     [Serializable]
-    public abstract class SerealizedMessage
+    public abstract class SerializedMessage
     {
         public void writeTo(Stream s) => new BinaryFormatter().Serialize(s, this);
 
-        public static SerealizedMessage readFrom(Stream s) => (SerealizedMessage) new BinaryFormatter().Deserialize(s);
+        public static SerializedMessage readFrom(Stream s) => (SerializedMessage) new BinaryFormatter().Deserialize(s);
     }
 
     [Serializable]
-    public abstract class ClientToServerMessage : SerealizedMessage
+    public abstract class ClientToServerMessage : SerializedMessage
     {
     }
 
     [Serializable]
-    public abstract class ServerToClientMessage : SerealizedMessage
+    public abstract class ServerToClientMessage : SerializedMessage
     {
     }
 

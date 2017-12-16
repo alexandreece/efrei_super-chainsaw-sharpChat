@@ -35,7 +35,7 @@ namespace super_chainsaw_sharpChatClient
             Connecting(hostname, port);
             while (true)
             {
-                var rcvMsg = SerealizedMessage.readFrom(comm.GetStream());
+                var rcvMsg = SerializedMessage.readFrom(comm.GetStream());
                 switch (rcvMsg)
                 {
                     case ConnectionStatusNotification connectionStatusNotification:
@@ -82,9 +82,9 @@ namespace super_chainsaw_sharpChatClient
             // todo : disconnect client, stop infinite loops and send notification signal to write RTF message
         }
 
-        private void send(SerealizedMessage serealizedMessage)
+        private void send(SerializedMessage serializedMessage)
         {
-            serealizedMessage.writeTo(comm.GetStream());
+            serializedMessage.writeTo(comm.GetStream());
         }
 
         public void sendUsername(string username)

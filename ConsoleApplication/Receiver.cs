@@ -28,7 +28,7 @@ namespace super_chainsaw_sharpChatClient
             {
                 while (true)
                 {
-                    var rcvMsg = SerealizedMessage.readFrom(_comm.GetStream());
+                    var rcvMsg = SerializedMessage.readFrom(_comm.GetStream());
                     switch (rcvMsg)
                     {
                         case CredentialsToConnect credentialsToConnect:
@@ -55,9 +55,9 @@ namespace super_chainsaw_sharpChatClient
 
             public override string ToString() => username + (chatroom == null ? "" : " (" + chatroom + ")");// text shown in notifications and list boxes
 
-            public void send(SerealizedMessage serealizedMessage)
+            public void send(SerializedMessage serializedMessage)
             {
-                serealizedMessage.writeTo(_comm.GetStream());
+                serializedMessage.writeTo(_comm.GetStream());
             }
         }
     }
