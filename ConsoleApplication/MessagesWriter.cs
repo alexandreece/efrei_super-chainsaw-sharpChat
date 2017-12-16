@@ -44,7 +44,7 @@ namespace super_chainsaw_sharpChatClient
                             && date.Day == lastDate.Day
                             && date.Hour == lastDate.Hour
                             && date.Minute == lastDate.Minute);
-            bool sameUsername = (username == lastUsername);// todo : check no problem because of "==" instead of ".Equals()"
+            bool sameUsername = (username == lastUsername);
 
             newline();
 
@@ -53,7 +53,7 @@ namespace super_chainsaw_sharpChatClient
                 newline().color((int) ColorNames.messageHeader).text(username);
 
                 if (!sameMinute)
-                    color((int) ColorNames.technicalDetails).text(" @ " + date.Hour + ":" + date.Minute);
+                    color((int) ColorNames.technicalDetails).text(" @ " + date.Hour + ":" + (date.Minute == 0 ? "00" : "" + date.Minute));
             }
 
             lastUsername = username;
