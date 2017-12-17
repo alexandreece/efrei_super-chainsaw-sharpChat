@@ -27,6 +27,8 @@ namespace SuperChainsaw_SharpChat.Net
 
             public string username { get; set; }
             public Chatroom chatroom { get; set; }
+            public DateTime DateConnected { get; private set; }
+            public DateTime DateDisconnected { get; private set; }
 
             public Receiver(TcpClient s) => _comm = s;
 
@@ -46,6 +48,7 @@ namespace SuperChainsaw_SharpChat.Net
                     switch (rcvMsg)
                     {
                         case CredentialsToConnect credentialsToConnect:
+                            DateConnected = DateTime.Now;
                             ConnectChatter(credentialsToConnect.Username);
                             break;
 
@@ -62,6 +65,7 @@ namespace SuperChainsaw_SharpChat.Net
                             break;
 
                         case ClientDisconnect clientDisconnect:
+                            DateDisconnected = DateTime.Now;
                             DisconnectClient(clientDisconnect);
                             break;
 
@@ -71,7 +75,7 @@ namespace SuperChainsaw_SharpChat.Net
                 }
             }
 
-            public override string ToString() => username + (chatroom == null ? "" : " (" + chatroom + ")");// text shown in notifications and list boxes
+            public override string ToString() => username + (chatroom == null ? " " + DateConnected.atDate() : " (" + chatroom + ")");// text shown in notifications and list boxes
 
             public void send(SerializedMessage serializedMessage)
             {
@@ -98,6 +102,11 @@ namespace SuperChainsaw_SharpChat.Net
             {
                 this.thread = thread;
                 thread.Start();
+            }
+
+            public void connectionAccepted()
+            {
+                DateConnected = DateTime.Now;
             }
         }
     }

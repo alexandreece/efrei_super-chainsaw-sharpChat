@@ -38,6 +38,9 @@ namespace SuperChainsaw_SharpChat.UI
             return this;
         }
 
+        public MessagesWriter notify(string notification, string technicalDetails, DateTime mentionDate)
+            => notify(notification + " " + mentionDate.atDate(), technicalDetails);
+
         public MessagesWriter usernameAtDate(string username, DateTime date)
         {
             bool sameMinute = (date.Year == lastDate.Year
@@ -54,7 +57,7 @@ namespace SuperChainsaw_SharpChat.UI
                 newline().color((int) messageHeader).text(username);
 
                 if (!sameMinute)
-                    color((int) technicalDetails).text(" @ " + date.Hour + ":" + (date.Minute == 0 ? "00" : "" + date.Minute));
+                    color((int) technicalDetails).text(" " + date.atDate());
             }
 
             lastUsername = username;

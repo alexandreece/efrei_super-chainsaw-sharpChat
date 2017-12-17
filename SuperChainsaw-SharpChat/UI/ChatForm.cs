@@ -177,7 +177,7 @@ namespace SuperChainsaw_SharpChat.UI
                         server.ChatroomAdded +=
                             delegate(Chatroom chatroom)
                             {
-                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroom + "' created").RtfText));
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "'" + chatroom.creator.username + "' created chatroom '" + chatroom + "'", chatroom.DateCreated).RtfText));
 
         //                        chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(chatroom)));
                             };

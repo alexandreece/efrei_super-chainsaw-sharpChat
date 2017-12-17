@@ -97,8 +97,8 @@ namespace SuperChainsaw_SharpChat.Net
                         if (pendingConnections.Contains(comm))
                             return;// client not connected yet so not allowed to create a chatroom; client must be accepted first
 
-                        var chatroom = new Chatroom(chatroomName);
-                        chatrooms.Add(chatroom);// todo : store information that <comm> created this chatroom (print their username)
+                        var chatroom = new Chatroom(chatroomName, comm);
+                        chatrooms.Add(chatroom);
 
                         chatroom.ChatroomMessageAppended +=
                             delegate(ChatroomMessageAppended appended)
@@ -145,7 +145,7 @@ namespace SuperChainsaw_SharpChat.Net
                             receiver.send(message);
                     };
                 comm.DisconnectClient +=
-                    delegate(ClientDisconnect clientDisconnect)// todo : store and print dates when chatter joined and disconnected
+                    delegate
                     {
                         pendingConnections.Remove(comm);
                         chattersNotChattingYet.Remove(comm);
@@ -191,6 +191,7 @@ namespace SuperChainsaw_SharpChat.Net
 
             pendingConnections.Remove(receiver);
             chattersNotChattingYet.Add(receiver);
+            receiver.connectionAccepted();
             ChatterAccepted(receiver);
 
             receiver.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.successfullyConnected));
