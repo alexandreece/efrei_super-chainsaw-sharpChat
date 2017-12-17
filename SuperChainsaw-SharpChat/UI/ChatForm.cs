@@ -526,7 +526,7 @@ namespace SuperChainsaw_SharpChat.UI
         {
             InitializeComponent();
 
-            SizeChanged += delegate { placeControls(); };
+            SizeChanged += delegate { placeControls(); }; placeControls();
             MinimumSize = new Size(887, 370);// todo : resolve flickering than occurs without this line or find a way to compute those values dynamically
 
             client = null;
