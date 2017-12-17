@@ -15,7 +15,21 @@ namespace SuperChainsaw_SharpChat.UI
         {
             connectedClientsGroupBox = new GroupBox();
             transferServerButton = new Button();
+            transferServerButton.Click +=
+                delegate
+                {
+                    MessageBox.Show("Please check if there are any updates of the SuperChainsaw SharpChat.\n\nIf that's the case, download it, install it, launch it and retry.", "Sorry, but this feature is not available yet :/", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    /* todo : uncomment the following line, implement the method called and delete the message box above
+                    server.tranferTo(connectedClientsList.SelectedItem);
+                    */
+                };
             disconnectClientButton = new Button();
+            disconnectClientButton.Click +=
+                delegate
+                {
+                    server.disconnectChatter(connectedClientsList.SelectedItem);
+                };
             connectedClientsList = new ListBox();
             chatroomsGroupBox = new GroupBox();
             removeChatroom = new Button();
@@ -172,6 +186,7 @@ namespace SuperChainsaw_SharpChat.UI
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "rejected: '" + receiver + "' not connected", receiver.DateDisconnected, MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
 
                                 pendingConnections.Items.Remove(receiver);
+                                connectedClientsList.Items.Remove(receiver);
                             };
                         server.ChatterChangedChatroom +=
                             delegate(Server.Receiver receiver)

@@ -210,5 +210,29 @@ namespace SuperChainsaw_SharpChat.Net
 
             receiver.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.connectionRejected));
         }
+
+        public void tranferTo(object chatter)
+        {
+            if (!(chatter is Receiver receiver))
+                return;
+        }
+
+        public void disconnectChatter(object chatter)
+        {
+            if (!(chatter is Receiver receiver))
+                return;
+
+            chattersNotChattingYet.Remove(receiver);
+            foreach (var c in chatters)
+                if (c.Key == receiver)
+                {
+                    chatters.Remove(c);
+                    break;
+                }
+            receiver.connectionRejected();
+            ChatterRejected(receiver);
+
+            receiver.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.connectionRejected));
+        }
     }
 }
