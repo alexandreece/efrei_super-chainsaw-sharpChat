@@ -10,6 +10,7 @@ namespace SuperChainsaw_SharpChat.Net.Messages
             successfullyConnected,
             usernameCannotBeEmpty,
             usernameAlreadyTaken,
+            connectionRejected,
             pendingConnection,
             usernameNotFound,
             wrongPassword

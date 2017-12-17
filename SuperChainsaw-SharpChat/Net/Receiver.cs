@@ -108,6 +108,11 @@ namespace SuperChainsaw_SharpChat.Net
             {
                 DateConnected = DateTime.Now;
             }
+
+            public void connectionRejected()
+            {
+                DateDisconnected = DateTime.Now;
+            }
         }
     }
 }

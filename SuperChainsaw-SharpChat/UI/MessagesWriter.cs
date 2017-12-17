@@ -38,8 +38,8 @@ namespace SuperChainsaw_SharpChat.UI
             return this;
         }
 
-        public MessagesWriter notify(string notification, string technicalDetails, DateTime mentionDate)
-            => notify(notification + " " + mentionDate.atDate(), technicalDetails);
+        public MessagesWriter notify(string notification, string technicalDetails, DateTime mentionDate, ColorNames color = notification)
+            => notify(notification + " " + mentionDate.atDate(), technicalDetails, color);
 
         public MessagesWriter usernameAtDate(string username, DateTime date)
         {

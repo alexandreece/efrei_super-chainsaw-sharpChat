@@ -11,6 +11,7 @@ namespace SuperChainsaw_SharpChat.Net
         public delegate void statusChanged(string hostname, int port);
         public event statusChanged Connecting;// server waiting for username
         public event statusChanged Connected;
+        public event statusChanged Rejected;
         public event statusChanged Pending;
         public event statusChanged UsernameAlreadyTaken;
         public event statusChanged UsernameCannotBeEmpty;
@@ -76,6 +77,10 @@ namespace SuperChainsaw_SharpChat.Net
 
                             case ConnectionStatusNotification.connectionStatus.usernameAlreadyTaken:
                                 UsernameAlreadyTaken(hostname, port);
+                                break;
+
+                            case ConnectionStatusNotification.connectionStatus.connectionRejected:
+                                Rejected(hostname, port);
                                 break;
 
                             case ConnectionStatusNotification.connectionStatus.pendingConnection:

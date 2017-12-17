@@ -62,6 +62,13 @@ namespace SuperChainsaw_SharpChat.UI
                             {
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client connected", hostname + ":" + port).RtfText));
                             };
+                        client.Rejected +=
+                            delegate(string hostname, int port)
+                            {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client rejected", hostname + ":" + port, MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
+
+                                stopClient();
+                            };
                         client.Pending +=
                             delegate(string hostname, int port)
                             {
@@ -159,6 +166,13 @@ namespace SuperChainsaw_SharpChat.UI
                                 pendingConnections.Items.Remove(receiver);
                                 connectedClientsList.Items.Add(receiver);
                             };
+                        server.ChatterRejected +=
+                            delegate(Server.Receiver receiver)
+                            {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "rejected: '" + receiver + "' not connected", receiver.DateDisconnected, MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
+
+                                pendingConnections.Items.Remove(receiver);
+                            };
                         server.ChatterChangedChatroom +=
                             delegate(Server.Receiver receiver)
                             {
@@ -188,6 +202,11 @@ namespace SuperChainsaw_SharpChat.UI
             newServerPort = new TextBox();// this.newServerPort = new System.Windows.Forms.NumericUpDown();
             pendingConnectionsGroupBox = new GroupBox();
             rejectPendingConnectionButton = new Button();
+            rejectPendingConnectionButton.Click +=
+                delegate
+                {
+                    server.rejectConnection(pendingConnections.SelectedItem);
+                };
             pendingConnections = new ListBox();
             acceptPendingConnectionButton = new Button();
             acceptPendingConnectionButton.Click +=

@@ -15,6 +15,7 @@ namespace SuperChainsaw_SharpChat.Net
         public delegate void chatterUpdate(Receiver receiver);
         public event chatterUpdate ChatterPending;
         public event chatterUpdate ChatterAccepted;
+        public event chatterUpdate ChatterRejected;
         public event chatterUpdate ChatterChangedChatroom;
         public event chatterUpdate ChatterDisconnected;
 
@@ -27,7 +28,7 @@ namespace SuperChainsaw_SharpChat.Net
 
         private Chatrooms chatrooms = new Chatrooms();
         private List<Receiver> pendingConnections = new List<Receiver>();
-        private List<Receiver> chattersNotChattingYet = new List<Receiver>();
+        private List<Receiver> chattersNotChattingYet = new List<Receiver>();// chatters that are in no chatroom
         private List<KeyValuePair<Receiver, Chatroom> > chatters = new List<KeyValuePair<Receiver, Chatroom> >();
 
         public Server(int port)
@@ -196,6 +197,18 @@ namespace SuperChainsaw_SharpChat.Net
 
             receiver.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.successfullyConnected));
             receiver.send(new AvailableChatroomsList(chatrooms.names()));
+        }
+
+        public void rejectConnection(object rejectedPendingConnection)
+        {
+            if (!(rejectedPendingConnection is Receiver receiver))
+                return;
+
+            pendingConnections.Remove(receiver);
+            receiver.connectionRejected();
+            ChatterRejected(receiver);
+
+            receiver.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.connectionRejected));
         }
     }
 }
