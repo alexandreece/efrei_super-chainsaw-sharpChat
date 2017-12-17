@@ -42,14 +42,20 @@ namespace SuperChainsaw_SharpChat.UI
             connectDisconnectClientButton.Click +=
                 delegate
                 {
+                    connectDisconnectClientButton.Enabled = false;// prevents the user from click a second time before the client is connected
+
                     if (client == null)
                     {
                         client = new Client(serverAddress.Text, int.Parse(serverPort.Text));// Client(address, (int)serverPort.Value);
                         messagesWriter = new MessagesWriter();
                         client.Connecting +=
-                            delegate
+                            delegate(string hostname, int port)
                             {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("connecting", hostname + ":" + port).RtfText));
+
                                 client.sendUsername(username.Text);
+
+                                connectDisconnectClientButton.Enabled = true;
                             };
                         client.Connected +=
                             delegate(string hostname, int port)
@@ -75,6 +81,13 @@ namespace SuperChainsaw_SharpChat.UI
 
                                 stopClient();
                             };
+                        client.Disconnected +=
+                            delegate
+                            {
+                                messages.Rtf = messagesWriter.notify("connection failed", "could not reach the server", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+
+                                stopClient();
+                            };
                         client.ServerChatroomsList +=
                             delegate(List<string> serverChatroomsList)
                             {
@@ -86,7 +99,7 @@ namespace SuperChainsaw_SharpChat.UI
                             delegate(ChatterChangedChatroom chatterChangedChatroom)
                             {
                                 messagesWriter = new MessagesWriter();
-                                messages.Rtf = messagesWriter.notify("you joined a chatroom", chatterChangedChatroom.Chatroom).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("you joined a chatroom", chatterChangedChatroom.Chatroom).RtfText));
                             };
                         client.ChatroomMessageAppended +=
                             delegate(ChatroomMessageAppended chatroomMessageAppended)
@@ -95,8 +108,8 @@ namespace SuperChainsaw_SharpChat.UI
                                 DateTime dateAdded = chatroomMessageAppended.DateAdded;
                                 var message = chatroomMessageAppended.Message;
 
-                                messages.Rtf = messagesWriter.usernameAtDate(username, dateAdded)
-                                                             .message(message).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.usernameAtDate(username, dateAdded)
+                                                                                              .message(message).RtfText));
                             };
                         new Thread(client.start).Start();
                     }
@@ -144,7 +157,15 @@ namespace SuperChainsaw_SharpChat.UI
                             {
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "'" + receiver.username + "' now in chatroom '" + receiver.chatroom + "'").RtfText));
 
-                                connectedClientsList.Items[connectedClientsList.Items.IndexOf(receiver)] = receiver;// refresh the displayed text
+                                connectedClientsList.Invoke(new Action(() => connectedClientsList.Items[connectedClientsList.Items.IndexOf(receiver)] = receiver));// refresh the displayed text
+                            };
+                        server.ChatterDisconnected +=
+                            delegate(Server.Receiver receiver)
+                            {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("chatter disconnected", "'" + receiver.username + "' left the server", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
+
+                                pendingConnections.Invoke(new Action(() => pendingConnections.Items.Remove(receiver)));
+                                connectedClientsList.Invoke(new Action(() => connectedClientsList.Items.Remove(receiver)));
                             };
                         server.ChatroomAdded +=
                             delegate(Chatroom chatroom)
@@ -369,7 +390,6 @@ namespace SuperChainsaw_SharpChat.UI
             messages.ReadOnly = true;
             messages.Size = new Size(427, 262);
             messages.TabIndex = 3;
-            messages.Text = "arnaud@127.0.0.1:8080 was successfully connected";
 
             this.message.Location = new Point(440, 343);
             this.message.Multiline = true;
@@ -521,6 +541,8 @@ namespace SuperChainsaw_SharpChat.UI
 
             client.stop();
             client = null;
+
+            connectDisconnectClientButton.Enabled = true;
         }
 
         private void placeControls()

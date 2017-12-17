@@ -14,6 +14,7 @@ namespace SuperChainsaw_SharpChat.Net
         public event statusChanged Pending;
         public event statusChanged UsernameAlreadyTaken;
         public event statusChanged UsernameCannotBeEmpty;
+        public event statusChanged Disconnected;
 
         public delegate void chatroomMessageAppended(ChatroomMessageAppended chatroomMessageAppended);
         public event chatroomMessageAppended ChatroomMessageAppended;
@@ -36,11 +37,27 @@ namespace SuperChainsaw_SharpChat.Net
 
         public void start()
         {
-            comm = new TcpClient(hostname, port);
+            try
+            {
+                comm = new TcpClient(hostname, port);
+            }
+            catch (Exception)
+            {
+                Disconnected(hostname, port);
+                return;
+            }
             Connecting(hostname, port);
             while (Thread.CurrentThread.IsAlive)
             {
-                var rcvMsg = SerializedMessage.readFrom(comm.GetStream());
+                SerializedMessage rcvMsg;
+                try
+                {
+                    rcvMsg = SerializedMessage.readFrom(comm.GetStream());
+                }
+                catch (Exception)
+                {
+                    return;
+                }
                 switch (rcvMsg)
                 {
                     case ConnectionStatusNotification connectionStatusNotification:
@@ -87,8 +104,16 @@ namespace SuperChainsaw_SharpChat.Net
 
         public void stop()
         {
-            // todo : send notification to server so that it releases the username for future chatters
-            // todo : disconnect client, stop infinite loops and send notification signal to write RTF message
+            if (comm == null)
+                return;
+
+            sendDisconnect();// warn the server so that it can release the username for future chatters
+            comm.Close();
+        }
+
+        private void sendDisconnect()
+        {
+            send(new ClientDisconnect());
         }
 
         private void send(SerializedMessage serializedMessage)

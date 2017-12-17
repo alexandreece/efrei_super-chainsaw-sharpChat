@@ -16,6 +16,7 @@ namespace SuperChainsaw_SharpChat.Net
         public event chatterUpdate ChatterPending;
         public event chatterUpdate ChatterAccepted;
         public event chatterUpdate ChatterChangedChatroom;
+        public event chatterUpdate ChatterDisconnected;
 
         public delegate void manageChatrooms(Chatroom chatroom);
         public event manageChatrooms ChatroomAdded;
@@ -133,6 +134,19 @@ namespace SuperChainsaw_SharpChat.Net
                         receiver.send(new ChatterChangedChatroom(chatroom.name));
                         foreach (var message in chatroom.Messages)
                             receiver.send(message);
+                    };
+                comm.DisconnectClient +=
+                    delegate(ClientDisconnect clientDisconnect)// todo : store and print dates when chatter joined and disconnected
+                    {
+                        pendingConnections.Remove(comm);
+                        chattersNotChattingYet.Remove(comm);
+                        foreach (var chatter in chatters)
+                            if (chatter.Key == comm)
+                            {
+                                chatters.Remove(chatter);
+                                break;
+                            }
+                        ChatterDisconnected(comm);
                     };
                 comm.AppendMessage +=
                     delegate(MessageToAppend messageToAppend)

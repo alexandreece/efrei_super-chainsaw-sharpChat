@@ -19,6 +19,9 @@ namespace SuperChainsaw_SharpChat.Net
             public delegate void appendMessage(MessageToAppend messageToAppend);
             public event appendMessage AppendMessage;
 
+            public delegate void disconnectClient(ClientDisconnect clientDisconnect);
+            public event disconnectClient DisconnectClient;
+
             private readonly TcpClient _comm;
 
             public string username { get; set; }
@@ -30,7 +33,15 @@ namespace SuperChainsaw_SharpChat.Net
             {
                 while (Thread.CurrentThread.IsAlive)
                 {
-                    var rcvMsg = SerializedMessage.readFrom(_comm.GetStream());
+                    SerializedMessage rcvMsg;
+                    try
+                    {
+                        rcvMsg = SerializedMessage.readFrom(_comm.GetStream());
+                    }
+                    catch (Exception)
+                    {
+                        return;
+                    }
                     switch (rcvMsg)
                     {
                         case CredentialsToConnect credentialsToConnect:
@@ -47,6 +58,10 @@ namespace SuperChainsaw_SharpChat.Net
 
                         case MessageToAppend messageToAppend:
                             AppendMessage(messageToAppend);
+                            break;
+
+                        case ClientDisconnect clientDisconnect:
+                            DisconnectClient(clientDisconnect);
                             break;
 
                         default:
