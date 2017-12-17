@@ -68,8 +68,7 @@ namespace SuperChainsaw_SharpChat.UI
                                 messagesWriter = new MessagesWriter();
                                 messages.Rtf = messagesWriter.notify("connection failed", "username cannot be empty").RtfText;
 
-                                client.stop();
-                                client = null;
+                                stopClient();
                             };
                         client.UsernameAlreadyTaken +=
                             delegate
@@ -77,8 +76,7 @@ namespace SuperChainsaw_SharpChat.UI
                                 messagesWriter = new MessagesWriter();
                                 messages.Rtf = messagesWriter.notify("connection failed", "username already taken").RtfText;
 
-                                client.stop();
-                                client = null;
+                                stopClient();
                             };
                         client.ServerChatroomsList +=
                             delegate(List<string> serverChatroomsList)
@@ -99,18 +97,64 @@ namespace SuperChainsaw_SharpChat.UI
                             };
                         new Thread(client.start).Start();
                     }
-                    else
-                    {
-                        client.stop();
-                        client = null;
-                    }
+                    else stopClient();
                 };
             serverPort = new TextBox();
             serverAddress = new TextBox();
             this.username = new TextBox();
             serverGroupBox = new GroupBox();
             startStopServerButton = new Button();
-            startStopServerButton.Click += startStopServer;
+            startStopServerButton.Click +=
+                delegate
+                {
+                    if (server == null)
+                    {
+                        server = new Server(int.Parse(newServerPort.Text));// server = new Server((int)newServerPort.Value);
+                        server.Started +=
+                            delegate(int port)
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server started", "on port " + port).RtfText));
+                                if (serverPort.Text.Length == 0)
+                                    serverPort.Invoke(new Action(() => serverPort.Text = port.ToString()));
+                            };
+                        server.ChatterPending +=
+                            delegate(Server.Receiver receiver)
+                            {
+                                pendingConnections.Items.Add(receiver);
+                                StringBuilder pendingConnectionsList = new StringBuilder();
+                                foreach (var pendingConnection in pendingConnections.Items)
+                                    if (pendingConnection != receiver)
+                                        pendingConnectionsList.Append(pendingConnection).Append(", ");
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("new pending connection for '" + receiver + "'", pendingConnectionsList.ToString().Length == 0 ? "" : "there are other pending connections: " + pendingConnectionsList).RtfText));
+                            };
+                        server.ChatterAccepted +=
+                            delegate(Server.Receiver receiver)
+                            {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "accepted: '" + receiver + "' now connected").RtfText));
+        
+                                pendingConnections.Items.Remove(receiver);
+                                connectedClientsList.Items.Add(receiver);
+                            };
+                        server.ChatterChangedChatroom +=
+                            delegate(Server.Receiver receiver)
+                            {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "'" + receiver.username + "' now in chatroom '" + receiver.chatroom + "'").RtfText));
+        
+                                connectedClientsList.Items.Remove(receiver);
+                                connectedClientsList.Items.Add(receiver);
+                            };
+                        server.ChatroomAdded +=
+                            delegate(Chatroom chatroom)
+                            {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroom + "' created").RtfText));
+        
+        //                        chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(chatroom)));
+                            };
+                        new Thread(server.start).Start();
+                    }
+                    else stopServer();
+                };
             newServerPort = new TextBox();// this.newServerPort = new System.Windows.Forms.NumericUpDown();
             pendingConnectionsGroupBox = new GroupBox();
             rejectPendingConnectionButton = new Button();
@@ -350,7 +394,58 @@ namespace SuperChainsaw_SharpChat.UI
             Name = "ChatForm";
             Text = "SuperChainsaw SharpChat";
             Load += ChatForm_Load;
-            FormClosing += closing;
+            FormClosing +=
+                delegate(object sender, FormClosingEventArgs e)
+                {
+                    if (e.CloseReason != CloseReason.UserClosing)
+                        return;
+
+                    if (client != null)
+                    {
+                        var dialogResult = MessageBox.Show("Do you wish to close it before quitting?", "Client still running", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button3);
+
+                        e.Cancel = (dialogResult == DialogResult.Cancel);
+
+                        switch (dialogResult)
+                        {
+                            case DialogResult.Cancel:
+                                return;
+
+                            case DialogResult.Yes:
+                                stopClient();
+                                break;
+
+                            case DialogResult.No:
+                                break;
+
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                    }
+
+                    if (server != null)
+                    {
+                        var dialogResult = MessageBox.Show("Do you wish to shut it down before quitting?\n\nWarning: every chatter will be disconnected and unable to chat.", "Server still running", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button3);
+
+                        e.Cancel = (dialogResult == DialogResult.Cancel);
+
+                        switch (dialogResult)
+                        {
+                            case DialogResult.Cancel:
+                                return;
+
+                            case DialogResult.Yes:
+                                stopServer();
+                                break;
+
+                            case DialogResult.No:
+                                break;
+
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                    }
+                };
             connectedClientsGroupBox.ResumeLayout(false);
             ChatroomsGroupBox.ResumeLayout(false);
             newChatroomGroupBox.ResumeLayout(false);
@@ -410,6 +505,18 @@ namespace SuperChainsaw_SharpChat.UI
 //            newServerPort.Maximum = 65000;
             newServerPort.Text = "8080";
             serverAddress.Text = "127.0.0.1";
+        }
+
+        private void stopServer()
+        {
+            server.stop();
+            server = null;
+        }
+
+        private void stopClient()
+        {
+            client.stop();
+            client = null;
         }
 
         private void placeControls()
@@ -556,66 +663,6 @@ namespace SuperChainsaw_SharpChat.UI
                     .newline().newline().color((int)ColorNames.notification).text("'arnaud@127.0.0.1:8080' was successfully connected")
                     .newline().newline().color((int)ColorNames.issueOrBadEnd).text("'arnaud' left the room").RtfText;
 */
-        }
-
-        private void closing(object sender, FormClosingEventArgs e)
-        {
-            // todo : check if serveur or client are running and warn
-        }
-
-        private void startStopServer(object sender, EventArgs e)
-        {
-            if (server == null)
-            {
-                server = new Server(int.Parse(newServerPort.Text));// server = new Server((int)newServerPort.Value);
-                server.Started +=
-                    delegate(int port)
-                    {
-                        messagesWriter = new MessagesWriter();
-                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server started", "on port " + port).RtfText));
-                        if (serverPort.Text.Length == 0)
-                            serverPort.Invoke(new Action(() => serverPort.Text = port.ToString()));
-                    };
-                server.ChatterPending +=
-                    delegate(Server.Receiver receiver)
-                    {
-                        pendingConnections.Items.Add(receiver);
-                        StringBuilder pendingConnectionsList = new StringBuilder();
-                        foreach (var pendingConnection in pendingConnections.Items)
-                            if (pendingConnection != receiver)
-                                pendingConnectionsList.Append(pendingConnection).Append(", ");
-                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("new pending connection for '" + receiver + "'", pendingConnectionsList.ToString().Length == 0 ? "" : "there are other pending connections: " + pendingConnectionsList).RtfText));
-                    };
-                server.ChatterAccepted +=
-                    delegate(Server.Receiver receiver)
-                    {
-                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "accepted: '" + receiver + "' now connected").RtfText));
-
-                        pendingConnections.Items.Remove(receiver);
-                        connectedClientsList.Items.Add(receiver);
-                    };
-                server.ChatterChangedChatroom +=
-                    delegate(Server.Receiver receiver)
-                    {
-                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "'" + receiver.username + "' now in chatroom '" + receiver.chatroom + "'").RtfText));
-
-                        connectedClientsList.Items.Remove(receiver);
-                        connectedClientsList.Items.Add(receiver);
-                    };
-                server.ChatroomAdded +=
-                    delegate(Chatroom chatroom)
-                    {
-                        messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroom + "' created").RtfText));
-
-//                        chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(chatroom)));
-                    };
-                new Thread(server.start).Start();
-            }
-            else
-            {
-                server.stop();
-                server = null;
-            }
         }
 
         private void connect_Click(object sender, EventArgs e)
