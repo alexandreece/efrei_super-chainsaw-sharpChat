@@ -9,7 +9,7 @@ namespace SuperChainsaw_SharpChat.Net
         public event chatroomMessageAppended ChatroomMessageAppended;
 
         public string name { get; }
-        private List<ChatroomMessageAppended> messages = new List<ChatroomMessageAppended>();
+        public List<ChatroomMessageAppended> Messages { get; } = new List<ChatroomMessageAppended>();
 
         public Chatroom(string name) => this.name = name;
 
@@ -17,7 +17,7 @@ namespace SuperChainsaw_SharpChat.Net
         {
             var chatroomMessageAppended = new ChatroomMessageAppended(username, message);
 
-            messages.Add(chatroomMessageAppended);
+            Messages.Add(chatroomMessageAppended);
 
             ChatroomMessageAppended(chatroomMessageAppended);
         }

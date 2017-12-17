@@ -96,9 +96,9 @@ namespace SuperChainsaw_SharpChat.Net
                             };
                     };
                 comm.JoinChatroom +=
-                    delegate(string chatroomString)
+                    delegate(string chatroomName)
                     {
-                        Chatroom chatroom = chatrooms.fromName(chatroomString);
+                        Chatroom chatroom = chatrooms.fromName(chatroomName);
                         if (chatroom == null)
                             throw new ArgumentNullException(nameof(chatroom));
 
@@ -114,14 +114,29 @@ namespace SuperChainsaw_SharpChat.Net
                         comm.chatroom = chatroom;
                         ChatterChangedChatroom(comm);
                     };
+                ChatterChangedChatroom +=
+                    delegate(Receiver receiver)
+                    {
+                        Chatroom chatroom = null;
+                        foreach (var chatter in chatters)
+                            if (chatter.Key == receiver)
+                            {
+                                chatroom = chatter.Value;
+                                break;
+                            }
+                        if (chatroom == null)
+                            throw new ArgumentNullException(nameof(chatroom));
+
+                        receiver.send(new ChatterChangedChatroom(chatroom.name));
+                        foreach (var message in chatroom.Messages)
+                            receiver.send(message);
+                    };
                 comm.AppendMessage +=
                     delegate(MessageToAppend messageToAppend)
                     {
                         foreach (var chatter in chatters)
                             if (chatter.Key == comm)
-                            {
                                 chatter.Value.addMessage(comm.username, messageToAppend.Message);
-                            }
                     };
                 new Thread(comm.doOperation).Start();
             }

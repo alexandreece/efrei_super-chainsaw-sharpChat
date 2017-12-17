@@ -22,10 +22,10 @@ namespace SuperChainsaw_SharpChat.Net
             return chatroomsNames;
         }
 
-        public Chatroom fromName(string chatroomString)
+        public Chatroom fromName(string chatroomName)
         {
             foreach (var chatroom in this)
-                if (chatroom.name == chatroomString)
+                if (chatroom.name == chatroomName)
                     return chatroom;
 
             return null;

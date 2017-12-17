@@ -18,6 +18,9 @@ namespace SuperChainsaw_SharpChat.Net
         public delegate void chatroomMessageAppended(ChatroomMessageAppended chatroomMessageAppended);
         public event chatroomMessageAppended ChatroomMessageAppended;
 
+        public delegate void chatterChangedChatroom(ChatterChangedChatroom chatterChangedChatroom);
+        public event chatterChangedChatroom ChatterChangedChatroom;
+
         public delegate void serverChatroomsList(List<string> serverChatroomsList);
         public event serverChatroomsList ServerChatroomsList;
 
@@ -66,6 +69,10 @@ namespace SuperChainsaw_SharpChat.Net
 
                     case AvailableChatroomsList availableChatroomsList:
                         ServerChatroomsList(availableChatroomsList.Chatrooms);
+                        break;
+
+                    case ChatterChangedChatroom chatterChangedChatroom:
+                        ChatterChangedChatroom(chatterChangedChatroom);
                         break;
 
                     case ChatroomMessageAppended chatroomMessageAppended:

@@ -78,9 +78,15 @@ namespace SuperChainsaw_SharpChat.UI
                         client.ServerChatroomsList +=
                             delegate(List<string> serverChatroomsList)
                             {
-                                chatroomsList.Items.Clear();
+                                chatroomsList.Invoke(new Action(() => chatroomsList.Items.Clear()));
                                 foreach (var serverChatroom in serverChatroomsList)
-                                    chatroomsList.Items.Add(serverChatroom);
+                                    chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(serverChatroom)));
+                            };
+                        client.ChatterChangedChatroom +=
+                            delegate(ChatterChangedChatroom chatterChangedChatroom)
+                            {
+                                messagesWriter = new MessagesWriter();
+                                messages.Rtf = messagesWriter.notify("you joined a chatroom", chatterChangedChatroom.Chatroom).RtfText;
                             };
                         client.ChatroomMessageAppended +=
                             delegate(ChatroomMessageAppended chatroomMessageAppended)
@@ -118,7 +124,7 @@ namespace SuperChainsaw_SharpChat.UI
                         server.ChatterPending +=
                             delegate(Server.Receiver receiver)
                             {
-                                pendingConnections.Items.Add(receiver);
+                                pendingConnections.Invoke(new Action(() => pendingConnections.Items.Add(receiver)));
                                 StringBuilder pendingConnectionsList = new StringBuilder();
                                 foreach (var pendingConnection in pendingConnections.Items)
                                     if (pendingConnection != receiver)
@@ -129,7 +135,7 @@ namespace SuperChainsaw_SharpChat.UI
                             delegate(Server.Receiver receiver)
                             {
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "accepted: '" + receiver + "' now connected").RtfText));
-        
+
                                 pendingConnections.Items.Remove(receiver);
                                 connectedClientsList.Items.Add(receiver);
                             };
@@ -137,15 +143,14 @@ namespace SuperChainsaw_SharpChat.UI
                             delegate(Server.Receiver receiver)
                             {
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "'" + receiver.username + "' now in chatroom '" + receiver.chatroom + "'").RtfText));
-        
-                                connectedClientsList.Items.Remove(receiver);
-                                connectedClientsList.Items.Add(receiver);
+
+                                connectedClientsList.Items[connectedClientsList.Items.IndexOf(receiver)] = receiver;// refresh the displayed text
                             };
                         server.ChatroomAdded +=
                             delegate(Chatroom chatroom)
                             {
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroom + "' created").RtfText));
-        
+
         //                        chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(chatroom)));
                             };
                         new Thread(server.start).Start();
