@@ -22,6 +22,7 @@ namespace SuperChainsaw_SharpChat.Net
         public event chatroomCreationStatus ChatterStillPending;
         public event chatroomCreationStatus ChatroomNameCannotBeEmpty;
         public event chatroomCreationStatus ChatroomNameAlreadyExists;
+        public event chatroomCreationStatus ChatroomDeleted;
 
         public delegate void chatroomMessageAppended(ChatroomMessageAppended chatroomMessageAppended);
         public event chatroomMessageAppended ChatroomMessageAppended;
@@ -98,23 +99,27 @@ namespace SuperChainsaw_SharpChat.Net
                         }
                         break;
 
-                    case ChatroomCreationStatusNotification chatroomCreationStatusNotification:
+                    case ChatroomStatusNotification chatroomCreationStatusNotification:
                         switch (chatroomCreationStatusNotification.Status)
                         {
-                            case ChatroomCreationStatusNotification.chatroomStatus.successfullyCreated:
+                            case ChatroomStatusNotification.chatroomStatus.successfullyCreated:
                                 ChatroomCreated(chatroomCreationStatusNotification.ToString());
                                 break;
 
-                            case ChatroomCreationStatusNotification.chatroomStatus.chatterStillPending:
+                            case ChatroomStatusNotification.chatroomStatus.chatterStillPending:
                                 ChatterStillPending(chatroomCreationStatusNotification.ToString());
                                 break;
 
-                            case ChatroomCreationStatusNotification.chatroomStatus.nameCannotBeEmpty:
+                            case ChatroomStatusNotification.chatroomStatus.nameCannotBeEmpty:
                                 ChatroomNameCannotBeEmpty(chatroomCreationStatusNotification.ToString());
                                 break;
 
-                            case ChatroomCreationStatusNotification.chatroomStatus.nameAlreadyExists:
+                            case ChatroomStatusNotification.chatroomStatus.nameAlreadyExists:
                                 ChatroomNameAlreadyExists(chatroomCreationStatusNotification.ToString());
+                                break;
+
+                            case ChatroomStatusNotification.chatroomStatus.deleted:
+                                ChatroomDeleted(chatroomCreationStatusNotification.ToString());
                                 break;
 
                             default:

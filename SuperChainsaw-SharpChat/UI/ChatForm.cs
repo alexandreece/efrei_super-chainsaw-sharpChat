@@ -33,6 +33,17 @@ namespace SuperChainsaw_SharpChat.UI
             connectedClientsList = new ListBox();
             chatroomsGroupBox = new GroupBox();
             removeChatroom = new Button();
+            removeChatroom.Click +=
+                delegate
+                {
+                    if (server == null)
+                    {
+                        MessageBox.Show("Only the server manager can perform this action.", "Cannot proceed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    server.removeChatroom(chatroomsList.SelectedItem);
+                };
             newChatroomGroupBox = new GroupBox();
             createChatroomButton = new Button();
             createChatroomButton.Click +=
@@ -69,7 +80,7 @@ namespace SuperChainsaw_SharpChat.UI
 
                                 client.sendUsername(username.Text);
 
-                                connectDisconnectClientButton.Enabled = true;
+                                connectDisconnectClientButton.Invoke(new Action(() => connectDisconnectClientButton.Enabled = true));
                             };
                         client.Connected +=
                             delegate(string hostname, int port)
@@ -91,50 +102,55 @@ namespace SuperChainsaw_SharpChat.UI
                         client.UsernameCannotBeEmpty +=
                             delegate
                             {
-                                messages.Rtf = messagesWriter.notify("connection failed", "username cannot be empty", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("connection failed", "username cannot be empty", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
 
                                 stopClient();
                             };
                         client.UsernameAlreadyTaken +=
                             delegate
                             {
-                                messages.Rtf = messagesWriter.notify("connection failed", "username already taken", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("connection failed", "username already taken", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
 
                                 stopClient();
                             };
                         client.Disconnected +=
                             delegate
                             {
-                                messages.Rtf = messagesWriter.notify("connection failed", "could not reach the server", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("connection failed", "could not reach the server", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
 
                                 stopClient();
                             };
                         client.ChatterDisconnect +=
                             delegate
                             {
-                                messages.Rtf = messagesWriter.notify("connection ended", "the server closed the connection", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("connection ended", "the server closed the connection", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
 
                                 stopClient();
                             };
                         client.ChatroomCreated +=
                             delegate(string chatroomName)
                             {
-                                messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' was successfully created").RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' was successfully created").RtfText));
                             };
                         client.ChatterStillPending +=
                             delegate(string chatroomName)
                             {
-                                messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' not created: client pending", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' not created: client pending", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
                             };
                         client.ChatroomNameCannotBeEmpty +=
                             delegate
                             {
-                                messages.Rtf = messagesWriter.notify("server notification", "chatroom was not created because its name cannot be empty", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom was not created because its name cannot be empty", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
                             };
                         client.ChatroomNameAlreadyExists +=
                             delegate(string chatroomName)
                             {
-                                messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' not created: name already exists", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' not created: name already exists", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
+                            };
+                        client.ChatroomDeleted +=
+                            delegate(string chatroomName)
+                            {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' was just deleted: you cannot post in it anymore", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
                             };
                         client.ServerChatroomsList +=
                             delegate(List<string> serverChatroomsList)
@@ -227,8 +243,11 @@ namespace SuperChainsaw_SharpChat.UI
                             delegate(Chatroom chatroom)
                             {
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "'" + chatroom.creator.username + "' created chatroom '" + chatroom + "'", chatroom.DateCreated).RtfText));
-
-        //                        chatroomsList.Invoke(new Action(() => chatroomsList.Items.Add(chatroom)));
+                            };
+                        server.ChatroomRemoved +=
+                            delegate(Chatroom chatroom)
+                            {
+                                messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroom + "' was deleted", MessagesWriter.ColorNames.issueOrBadEnd).RtfText));
                             };
                         new Thread(server.start).Start();
                     }

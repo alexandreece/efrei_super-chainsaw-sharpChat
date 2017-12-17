@@ -21,6 +21,7 @@ namespace SuperChainsaw_SharpChat.Net
 
         public delegate void manageChatrooms(Chatroom chatroom);
         public event manageChatrooms ChatroomAdded;
+        public event manageChatrooms ChatroomRemoved;
 
         private int port;
         private byte[] localhost = {127, 0, 0, 1};
@@ -37,6 +38,15 @@ namespace SuperChainsaw_SharpChat.Net
 
             chatrooms.ChatroomAdded += chatroom => ChatroomAdded(chatroom);
             chatrooms.ChatroomAdded +=
+                delegate
+                {
+                    foreach (var chatterNotChattingYet in chattersNotChattingYet)
+                        chatterNotChattingYet.send(new AvailableChatroomsList(chatrooms.names()));
+                    foreach (var chatter in chatters)
+                        chatter.Key.send(new AvailableChatroomsList(chatrooms.names()));
+                };
+            chatrooms.ChatroomRemoved += chatroom => ChatroomRemoved(chatroom);
+            chatrooms.ChatroomRemoved +=
                 delegate
                 {
                     foreach (var chatterNotChattingYet in chattersNotChattingYet)
@@ -98,25 +108,25 @@ namespace SuperChainsaw_SharpChat.Net
                         if (pendingConnections.Contains(comm))
                         {// client not connected yet so not allowed to create a chatroom; client must be accepted first
 
-                            comm.send(new ChatroomCreationStatusNotification(ChatroomCreationStatusNotification.chatroomStatus.chatterStillPending, chatroomName));
+                            comm.send(new ChatroomStatusNotification(ChatroomStatusNotification.chatroomStatus.chatterStillPending, chatroomName));
                             return;
                         }
 
                         if (chatroomName.isEmpty())
                         {
-                            comm.send(new ChatroomCreationStatusNotification(ChatroomCreationStatusNotification.chatroomStatus.nameCannotBeEmpty, chatroomName));
+                            comm.send(new ChatroomStatusNotification(ChatroomStatusNotification.chatroomStatus.nameCannotBeEmpty, chatroomName));
                             return;
                         }
 
                         if (chatrooms.isNameTaken(chatroomName))
                         {
-                            comm.send(new ChatroomCreationStatusNotification(ChatroomCreationStatusNotification.chatroomStatus.nameAlreadyExists, chatroomName));
+                            comm.send(new ChatroomStatusNotification(ChatroomStatusNotification.chatroomStatus.nameAlreadyExists, chatroomName));
                             return;
                         }
 
                         var chatroom = new Chatroom(chatroomName, comm);
                         chatrooms.Add(chatroom);
-                        comm.send(new ChatroomCreationStatusNotification(ChatroomCreationStatusNotification.chatroomStatus.successfullyCreated, chatroomName));
+                        comm.send(new ChatroomStatusNotification(ChatroomStatusNotification.chatroomStatus.successfullyCreated, chatroomName));
 
                         chatroom.ChatroomMessageAppended +=
                             delegate(ChatroomMessageAppended appended)
@@ -250,6 +260,29 @@ namespace SuperChainsaw_SharpChat.Net
             ChatterRejected(receiver);
 
             receiver.send(new ConnectionStatusNotification(ConnectionStatusNotification.connectionStatus.connectionRejected));
+        }
+
+        public void removeChatroom(object o)
+        {
+            if (!(o is string chatroomName))
+                return;
+
+            Chatroom chatroom = chatrooms.fromName(chatroomName);
+            if (chatroom == null)
+                throw new ArgumentNullException(nameof(chatroom));
+
+            chatrooms.Remove(chatroom);
+            chatters.ForEach(chatter =>
+            {
+                if (chatter.Value == chatroom)
+                {
+                    chattersNotChattingYet.Add(chatter.Key);
+                    chatter.Key.send(new ChatroomStatusNotification(ChatroomStatusNotification.chatroomStatus.deleted, chatroomName));
+                }
+            });
+            chatters.RemoveAll(chatter =>
+                chatter.Value == chatroom
+            );
         }
     }
 }

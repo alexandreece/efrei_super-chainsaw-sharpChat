@@ -4,20 +4,21 @@ using System.Security;
 namespace SuperChainsaw_SharpChat.Net.Messages
 {
     [Serializable]
-    public class ChatroomCreationStatusNotification : ServerToClientMessage
+    public class ChatroomStatusNotification : ServerToClientMessage
     {
         public enum chatroomStatus
         {
             successfullyCreated,
             chatterStillPending,
             nameCannotBeEmpty,
-            nameAlreadyExists
+            nameAlreadyExists,
+            deleted
         }
 
         public chatroomStatus Status { get; }
         public string Name { get; }
 
-        public ChatroomCreationStatusNotification(chatroomStatus status, string name)
+        public ChatroomStatusNotification(chatroomStatus status, string name)
         {
             Status = status;
             Name = name;

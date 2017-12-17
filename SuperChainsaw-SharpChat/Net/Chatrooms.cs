@@ -6,11 +6,18 @@ namespace SuperChainsaw_SharpChat.Net
     {
         public delegate void manageChatrooms(Chatroom chatroom);
         public event manageChatrooms ChatroomAdded;
+        public event manageChatrooms ChatroomRemoved;
 
         public new void Add(Chatroom chatroom)
         {
             base.Add(chatroom);
             ChatroomAdded(chatroom);
+        }
+
+        public new void Remove(Chatroom chatroom)
+        {
+            base.Remove(chatroom);
+            ChatroomRemoved(chatroom);
         }
 
         public List<string> names()
