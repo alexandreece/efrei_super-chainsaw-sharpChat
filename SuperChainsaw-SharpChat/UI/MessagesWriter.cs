@@ -1,4 +1,5 @@
 ﻿using System;
+using static SuperChainsaw_SharpChat.UI.MessagesWriter.ColorNames;
 
 namespace SuperChainsaw_SharpChat.UI
 {
@@ -26,11 +27,11 @@ namespace SuperChainsaw_SharpChat.UI
                                                    .add(new Color(200, 20, 20)))
         { }
 
-        public MessagesWriter notify(string notification, string technicalDetails)
+        public MessagesWriter notify(string notification, string technicalDetails, ColorNames color = notification)
         {
-            newline().newline().color((int) ColorNames.notification);
+            newline().newline().color((int) color);
             text(notification);
-                
+
             newline().color((int) ColorNames.technicalDetails);
             text(technicalDetails);
 
@@ -50,10 +51,10 @@ namespace SuperChainsaw_SharpChat.UI
 
             if (!sameMinute || !sameUsername)
             {
-                newline().color((int) ColorNames.messageHeader).text(username);
+                newline().color((int) messageHeader).text(username);
 
                 if (!sameMinute)
-                    color((int) ColorNames.technicalDetails).text(" @ " + date.Hour + ":" + (date.Minute == 0 ? "00" : "" + date.Minute));
+                    color((int) technicalDetails).text(" @ " + date.Hour + ":" + (date.Minute == 0 ? "00" : "" + date.Minute));
             }
 
             lastUsername = username;
@@ -64,7 +65,7 @@ namespace SuperChainsaw_SharpChat.UI
 
         public MessagesWriter message(string message)
         {
-            newline().color((int) ColorNames.messageContent).text(message);
+            newline().color((int) messageContent).text(message);
 
             return this;
         }

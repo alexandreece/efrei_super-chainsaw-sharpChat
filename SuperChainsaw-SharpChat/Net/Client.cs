@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Threading;
 using SuperChainsaw_SharpChat.Net.Messages;
 
 namespace SuperChainsaw_SharpChat.Net
@@ -34,7 +35,7 @@ namespace SuperChainsaw_SharpChat.Net
         {
             comm = new TcpClient(hostname, port);
             Connecting(hostname, port);
-            while (true)
+            while (Thread.CurrentThread.IsAlive)
             {
                 var rcvMsg = SerializedMessage.readFrom(comm.GetStream());
                 switch (rcvMsg)

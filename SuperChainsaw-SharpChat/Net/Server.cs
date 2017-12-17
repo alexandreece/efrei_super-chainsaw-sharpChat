@@ -49,7 +49,7 @@ namespace SuperChainsaw_SharpChat.Net
             l.Start();
             Started(port);
 
-            while (true)
+            while (Thread.CurrentThread.IsAlive)
             {
                 var comm = new Receiver(l.AcceptTcpClient());
                 pendingConnections.Add(comm);

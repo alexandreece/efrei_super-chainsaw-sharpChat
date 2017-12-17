@@ -17,7 +17,7 @@ namespace SuperChainsaw_SharpChat.UI
             transferServerButton = new Button();
             disconnectClientButton = new Button();
             connectedClientsList = new ListBox();
-            ChatroomsGroupBox = new GroupBox();
+            chatroomsGroupBox = new GroupBox();
             removeChatroom = new Button();
             newChatroomGroupBox = new GroupBox();
             createChatroomButton = new Button();
@@ -45,6 +45,7 @@ namespace SuperChainsaw_SharpChat.UI
                     if (client == null)
                     {
                         client = new Client(serverAddress.Text, int.Parse(serverPort.Text));// Client(address, (int)serverPort.Value);
+                        messagesWriter = new MessagesWriter();
                         client.Connecting +=
                             delegate
                             {
@@ -53,28 +54,24 @@ namespace SuperChainsaw_SharpChat.UI
                         client.Connected +=
                             delegate(string hostname, int port)
                             {
-                                messagesWriter = new MessagesWriter();
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client connected", hostname + ":" + port).RtfText));
                             };
                         client.Pending +=
                             delegate(string hostname, int port)
                             {
-                                messagesWriter = new MessagesWriter();
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("client pending", hostname + ":" + port).RtfText));
                             };
                         client.UsernameCannotBeEmpty +=
                             delegate
                             {
-                                messagesWriter = new MessagesWriter();
-                                messages.Rtf = messagesWriter.notify("connection failed", "username cannot be empty").RtfText;
+                                messages.Rtf = messagesWriter.notify("connection failed", "username cannot be empty", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
 
                                 stopClient();
                             };
                         client.UsernameAlreadyTaken +=
                             delegate
                             {
-                                messagesWriter = new MessagesWriter();
-                                messages.Rtf = messagesWriter.notify("connection failed", "username already taken").RtfText;
+                                messages.Rtf = messagesWriter.notify("connection failed", "username already taken", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
 
                                 stopClient();
                             };
@@ -110,10 +107,10 @@ namespace SuperChainsaw_SharpChat.UI
                     if (server == null)
                     {
                         server = new Server(int.Parse(newServerPort.Text));// server = new Server((int)newServerPort.Value);
+                        messagesWriter = new MessagesWriter();
                         server.Started +=
                             delegate(int port)
                             {
-                                messagesWriter = new MessagesWriter();
                                 messages.Invoke(new Action(() => messages.Rtf = messagesWriter.notify("server started", "on port " + port).RtfText));
                                 if (serverPort.Text.Length == 0)
                                     serverPort.Invoke(new Action(() => serverPort.Text = port.ToString()));
@@ -177,7 +174,7 @@ namespace SuperChainsaw_SharpChat.UI
                     message.Clear();
                 };
             connectedClientsGroupBox.SuspendLayout();
-            ChatroomsGroupBox.SuspendLayout();
+            chatroomsGroupBox.SuspendLayout();
             newChatroomGroupBox.SuspendLayout();
             connectionGroupBox.SuspendLayout();
             serverGroupBox.SuspendLayout();
@@ -214,15 +211,15 @@ namespace SuperChainsaw_SharpChat.UI
             connectedClientsList.Size = new Size(187, 238);
             connectedClientsList.TabIndex = 0;
 
-            ChatroomsGroupBox.Controls.Add(removeChatroom);
-            ChatroomsGroupBox.Controls.Add(newChatroomGroupBox);
-            ChatroomsGroupBox.Controls.Add(chatroomsList);
-            ChatroomsGroupBox.Location = new Point(233, 17);
-            ChatroomsGroupBox.Name = "ChatroomsGroupBox";
-            ChatroomsGroupBox.Size = new Size(200, 533);
-            ChatroomsGroupBox.TabIndex = 0;
-            ChatroomsGroupBox.TabStop = false;
-            ChatroomsGroupBox.Text = "Active chatrooms";
+            chatroomsGroupBox.Controls.Add(removeChatroom);
+            chatroomsGroupBox.Controls.Add(newChatroomGroupBox);
+            chatroomsGroupBox.Controls.Add(chatroomsList);
+            chatroomsGroupBox.Location = new Point(233, 17);
+            chatroomsGroupBox.Name = "chatroomsGroupBox";
+            chatroomsGroupBox.Size = new Size(200, 533);
+            chatroomsGroupBox.TabIndex = 0;
+            chatroomsGroupBox.TabStop = false;
+            chatroomsGroupBox.Text = "Active chatrooms";
 
             removeChatroom.Location = new Point(6, 498);
             removeChatroom.Name = "removeChatroom";
@@ -390,7 +387,7 @@ namespace SuperChainsaw_SharpChat.UI
             Controls.Add(messages);
             Controls.Add(serverGroupBox);
             Controls.Add(connectionGroupBox);
-            Controls.Add(ChatroomsGroupBox);
+            Controls.Add(chatroomsGroupBox);
             Name = "ChatForm";
             Text = "SuperChainsaw SharpChat";
             Load += ChatForm_Load;
@@ -447,7 +444,7 @@ namespace SuperChainsaw_SharpChat.UI
                     }
                 };
             connectedClientsGroupBox.ResumeLayout(false);
-            ChatroomsGroupBox.ResumeLayout(false);
+            chatroomsGroupBox.ResumeLayout(false);
             newChatroomGroupBox.ResumeLayout(false);
             newChatroomGroupBox.PerformLayout();
             connectionGroupBox.ResumeLayout(false);
@@ -471,7 +468,7 @@ namespace SuperChainsaw_SharpChat.UI
                 private ListBox connectedClientsList;
                 private Button disconnectClientButton;
                 private Button transferServerButton;
-        private GroupBox ChatroomsGroupBox;
+        private GroupBox chatroomsGroupBox;
             private GroupBox newChatroomGroupBox;
                 private TextBox chatroomName;
                 private Button createChatroomButton;
@@ -515,6 +512,8 @@ namespace SuperChainsaw_SharpChat.UI
 
         private void stopClient()
         {
+            chatroomsList.Items.Clear();
+
             client.stop();
             client = null;
         }
@@ -584,9 +583,9 @@ namespace SuperChainsaw_SharpChat.UI
                     transferServerButton.Size = new Size(95, 23);
                 }
             }
-            ChatroomsGroupBox.Location = new Point(nextX, nextY);
-            ChatroomsGroupBox.Size = new Size(groupBoxWidth, height - 2 * innerFormMargin);
-            nextX += ChatroomsGroupBox.Width + interControlMargin;
+            chatroomsGroupBox.Location = new Point(nextX, nextY);
+            chatroomsGroupBox.Size = new Size(groupBoxWidth, height - 2 * innerFormMargin);
+            nextX += chatroomsGroupBox.Width + interControlMargin;
             {
                 int nextChatroomsGroupBoxX = interControlMargin;
                 int nextChatroomsGroupBoxY = innerTopGroupBoxEmptyMargin;
@@ -603,12 +602,12 @@ namespace SuperChainsaw_SharpChat.UI
                     createChatroomButton.Size = new Size(174, 23);
                 }
                 chatroomsList.Location = new Point(nextChatroomsGroupBoxX, nextChatroomsGroupBoxY);
-                chatroomsList.Size = new Size(188, ChatroomsGroupBox.Height - newChatroomGroupBox.Height - removeChatroom.Height - innerTopGroupBoxEmptyMargin - 3 * interControlMargin);
+                chatroomsList.Size = new Size(188, chatroomsGroupBox.Height - newChatroomGroupBox.Height - removeChatroom.Height - innerTopGroupBoxEmptyMargin - 3 * interControlMargin);
                 nextChatroomsGroupBoxY += chatroomsList.Height + interControlMargin;
                 removeChatroom.Location = new Point(nextChatroomsGroupBoxX, nextChatroomsGroupBoxY);
                 removeChatroom.Size = new Size(188, 23);
             }
-            var connectionGroupBoxWidth = width - serverGroupBox.Width - ChatroomsGroupBox.Width - 2 * interControlMargin - 2 * innerFormMargin;
+            var connectionGroupBoxWidth = width - serverGroupBox.Width - chatroomsGroupBox.Width - 2 * interControlMargin - 2 * innerFormMargin;
             connectionGroupBox.Location = new Point(nextX, nextY);
             connectionGroupBox.Size = new Size(connectionGroupBoxWidth, innerTopGroupBoxMargin + controlHeight + interControlMargin);
             nextY += connectionGroupBox.Height + interControlMargin;
@@ -663,47 +662,6 @@ namespace SuperChainsaw_SharpChat.UI
                     .newline().newline().color((int)ColorNames.notification).text("'arnaud@127.0.0.1:8080' was successfully connected")
                     .newline().newline().color((int)ColorNames.issueOrBadEnd).text("'arnaud' left the room").RtfText;
 */
-        }
-
-        private void connect_Click(object sender, EventArgs e)
-        {
-//            chatrooms.Items.Clear();
-
-            if (client == null)
-                client = new Client("127.0.0.1", 4455);
-            new Thread(client.start).Start();
-            messagesWriter = new MessagesWriter();
-//            messages.Rtf = messagesWriter.color((int)ColorNames.green).text("Connected to \"").RtfText;
-
-            try
-            {
-//                client.Connect(serverAddress.Text, Int32.Parse(serverPort.Text));
-                new Thread(Receive).Start();
-            }
-            catch (Exception)
-            {
-                messagesWriter = new MessagesWriter();
-//                messages.Rtf = messagesWriter.color((int)ColorNames.red).text("Error connecting to \"").RtfText;
-            }
-
-            messages.Rtf = messagesWriter.text(serverAddress.Text + ":" + serverPort.Text + "\".").RtfText;
-        }
-
-        private void envoyer_Click(object sender, EventArgs e)
-        {
-            var message = Encoding.ASCII.GetBytes(this.message.Text);
-//            client.GetStream().Write(message, 0, message.Length);
-        }
-
-        private void Receive()
-        {
-            while (Thread.CurrentThread.IsAlive)
-            {
-                var message = new Byte[256];
-//                client.GetStream().Read(message, 0, message.Length);
-
-                this.message.Text += Encoding.ASCII.GetString(message, 0, message.Length);
-            }
         }
     }
 }
