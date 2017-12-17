@@ -84,6 +84,9 @@ namespace SuperChainsaw_SharpChat.Net
                 comm.CreateChatroom +=
                     delegate(string chatroomName)
                     {
+                        if (pendingConnections.Contains(comm))
+                            return;// client not connected yet so not allowed to create a chatroom; client must be accepted first
+
                         var chatroom = new Chatroom(chatroomName);
                         chatrooms.Add(chatroom);// todo : store information that <comm> created this chatroom (print their username)
 
