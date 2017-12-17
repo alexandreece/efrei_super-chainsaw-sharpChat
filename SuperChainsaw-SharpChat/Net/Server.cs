@@ -96,10 +96,27 @@ namespace SuperChainsaw_SharpChat.Net
                     delegate(string chatroomName)
                     {
                         if (pendingConnections.Contains(comm))
-                            return;// client not connected yet so not allowed to create a chatroom; client must be accepted first
+                        {// client not connected yet so not allowed to create a chatroom; client must be accepted first
+
+                            comm.send(new ChatroomCreationStatusNotification(ChatroomCreationStatusNotification.chatroomStatus.chatterStillPending, chatroomName));
+                            return;
+                        }
+
+                        if (chatroomName.isEmpty())
+                        {
+                            comm.send(new ChatroomCreationStatusNotification(ChatroomCreationStatusNotification.chatroomStatus.nameCannotBeEmpty, chatroomName));
+                            return;
+                        }
+
+                        if (chatrooms.isNameTaken(chatroomName))
+                        {
+                            comm.send(new ChatroomCreationStatusNotification(ChatroomCreationStatusNotification.chatroomStatus.nameAlreadyExists, chatroomName));
+                            return;
+                        }
 
                         var chatroom = new Chatroom(chatroomName, comm);
                         chatrooms.Add(chatroom);
+                        comm.send(new ChatroomCreationStatusNotification(ChatroomCreationStatusNotification.chatroomStatus.successfullyCreated, chatroomName));
 
                         chatroom.ChatroomMessageAppended +=
                             delegate(ChatroomMessageAppended appended)

@@ -17,6 +17,12 @@ namespace SuperChainsaw_SharpChat.Net
         public event statusChanged UsernameCannotBeEmpty;
         public event statusChanged Disconnected;
 
+        public delegate void chatroomCreationStatus(string name);
+        public event chatroomCreationStatus ChatroomCreated;
+        public event chatroomCreationStatus ChatterStillPending;
+        public event chatroomCreationStatus ChatroomNameCannotBeEmpty;
+        public event chatroomCreationStatus ChatroomNameAlreadyExists;
+
         public delegate void chatroomMessageAppended(ChatroomMessageAppended chatroomMessageAppended);
         public event chatroomMessageAppended ChatroomMessageAppended;
 
@@ -85,6 +91,30 @@ namespace SuperChainsaw_SharpChat.Net
 
                             case ConnectionStatusNotification.connectionStatus.pendingConnection:
                                 Pending(hostname, port);
+                                break;
+
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                        break;
+
+                    case ChatroomCreationStatusNotification chatroomCreationStatusNotification:
+                        switch (chatroomCreationStatusNotification.Status)
+                        {
+                            case ChatroomCreationStatusNotification.chatroomStatus.successfullyCreated:
+                                ChatroomCreated(chatroomCreationStatusNotification.ToString());
+                                break;
+
+                            case ChatroomCreationStatusNotification.chatroomStatus.chatterStillPending:
+                                ChatterStillPending(chatroomCreationStatusNotification.ToString());
+                                break;
+
+                            case ChatroomCreationStatusNotification.chatroomStatus.nameCannotBeEmpty:
+                                ChatroomNameCannotBeEmpty(chatroomCreationStatusNotification.ToString());
+                                break;
+
+                            case ChatroomCreationStatusNotification.chatroomStatus.nameAlreadyExists:
+                                ChatroomNameAlreadyExists(chatroomCreationStatusNotification.ToString());
                                 break;
 
                             default:

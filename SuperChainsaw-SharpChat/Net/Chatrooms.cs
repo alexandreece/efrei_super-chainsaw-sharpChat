@@ -30,5 +30,14 @@ namespace SuperChainsaw_SharpChat.Net
 
             return null;
         }
+
+        public bool isNameTaken(string chatroomName)
+        {
+            foreach (var chatroom in this)
+                if (chatroom.name == chatroomName)
+                    return true;
+
+            return false;
+        }
     }
 }

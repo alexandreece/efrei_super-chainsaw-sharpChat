@@ -116,6 +116,26 @@ namespace SuperChainsaw_SharpChat.UI
 
                                 stopClient();
                             };
+                        client.ChatroomCreated +=
+                            delegate(string chatroomName)
+                            {
+                                messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' was successfully created").RtfText;
+                            };
+                        client.ChatterStillPending +=
+                            delegate(string chatroomName)
+                            {
+                                messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' not created: client pending", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                            };
+                        client.ChatroomNameCannotBeEmpty +=
+                            delegate
+                            {
+                                messages.Rtf = messagesWriter.notify("server notification", "chatroom was not created because its name cannot be empty", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                            };
+                        client.ChatroomNameAlreadyExists +=
+                            delegate(string chatroomName)
+                            {
+                                messages.Rtf = messagesWriter.notify("server notification", "chatroom '" + chatroomName + "' not created: name already exists", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+                            };
                         client.ServerChatroomsList +=
                             delegate(List<string> serverChatroomsList)
                             {
