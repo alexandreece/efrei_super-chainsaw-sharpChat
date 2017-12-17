@@ -23,6 +23,7 @@ namespace SuperChainsaw_SharpChat.Net
 
         private int port;
         private byte[] localhost = {127, 0, 0, 1};
+        TcpListener tcpListener;
 
         private Chatrooms chatrooms = new Chatrooms();
         private List<Receiver> pendingConnections = new List<Receiver>();
@@ -46,13 +47,21 @@ namespace SuperChainsaw_SharpChat.Net
 
         public void start()
         {
-            var l = new TcpListener(new IPAddress(localhost), port);
-            l.Start();
+            tcpListener = new TcpListener(new IPAddress(localhost), port);
+            tcpListener.Start();
             Started(port);
 
             while (Thread.CurrentThread.IsAlive)
             {
-                var comm = new Receiver(l.AcceptTcpClient());
+                Receiver comm;
+                try
+                {
+                    comm = new Receiver(tcpListener.AcceptTcpClient());
+                }
+                catch (Exception)
+                {
+                    return;
+                }
                 pendingConnections.Add(comm);
                 comm.ConnectChatter +=
                     delegate(string username)
@@ -155,14 +164,24 @@ namespace SuperChainsaw_SharpChat.Net
                             if (chatter.Key == comm)
                                 chatter.Value.addMessage(comm.username, messageToAppend.Message);
                     };
-                new Thread(comm.doOperation).Start();
+                comm.start(new Thread(comm.doOperation));
             }
         }
 
         public void stop()
         {
-            // todo : send notification then disconnect every client then delete TCP server
-            // todo : check what happens with the infinite while loops
+            foreach (var chatterNotChattingYet in chattersNotChattingYet)
+                chatterNotChattingYet.stop();
+            foreach (var chatter in chatters)
+                chatter.Key.stop();
+
+            foreach (var chatterNotChattingYet in chattersNotChattingYet)
+                chatterNotChattingYet.wait();
+            foreach (var chatter in chatters)
+                chatter.Key.wait();
+
+            tcpListener.Stop();
+            tcpListener = null;
         }
 
         public void acceptConnection(object chatter)

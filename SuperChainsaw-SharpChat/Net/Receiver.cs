@@ -23,6 +23,7 @@ namespace SuperChainsaw_SharpChat.Net
             public event disconnectClient DisconnectClient;
 
             private readonly TcpClient _comm;
+            private Thread thread;
 
             public string username { get; set; }
             public Chatroom chatroom { get; set; }
@@ -75,6 +76,28 @@ namespace SuperChainsaw_SharpChat.Net
             public void send(SerializedMessage serializedMessage)
             {
                 serializedMessage.writeTo(_comm.GetStream());
+            }
+
+            private void sendDisconnect()
+            {
+                send(new ChatterDisconnect());
+            }
+
+            public void stop()
+            {
+                sendDisconnect();// warn the server so that it can release the username for future chatters
+                _comm.Close();
+            }
+
+            public void wait()
+            {
+                thread.Join();
+            }
+
+            public void start(Thread thread)
+            {
+                this.thread = thread;
+                thread.Start();
             }
         }
     }

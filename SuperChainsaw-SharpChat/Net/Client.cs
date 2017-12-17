@@ -25,6 +25,9 @@ namespace SuperChainsaw_SharpChat.Net
         public delegate void serverChatroomsList(List<string> serverChatroomsList);
         public event serverChatroomsList ServerChatroomsList;
 
+        public delegate void chatterDisconnect(ChatterDisconnect chatterDisconnect);
+        public event chatterDisconnect ChatterDisconnect;
+
         private string hostname;
         private int port;
         TcpClient comm;
@@ -96,6 +99,10 @@ namespace SuperChainsaw_SharpChat.Net
                         ChatroomMessageAppended(chatroomMessageAppended);
                         break;
 
+                    case ChatterDisconnect chatterDisconnect:
+                        ChatterDisconnect(chatterDisconnect);
+                        break;
+
                     default:
                         throw new ArgumentOutOfRangeException(nameof(rcvMsg));
                 }
@@ -109,6 +116,7 @@ namespace SuperChainsaw_SharpChat.Net
 
             sendDisconnect();// warn the server so that it can release the username for future chatters
             comm.Close();
+            comm = null;
         }
 
         private void sendDisconnect()

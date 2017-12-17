@@ -88,6 +88,13 @@ namespace SuperChainsaw_SharpChat.UI
 
                                 stopClient();
                             };
+                        client.ChatterDisconnect +=
+                            delegate
+                            {
+                                messages.Rtf = messagesWriter.notify("connection ended", "the server closed the connection", MessagesWriter.ColorNames.issueOrBadEnd).RtfText;
+
+                                stopClient();
+                            };
                         client.ServerChatroomsList +=
                             delegate(List<string> serverChatroomsList)
                             {
