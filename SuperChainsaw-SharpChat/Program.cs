@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Windows.Forms;
+using SuperChainsaw_SharpChat.UI;
 
-namespace super_chainsaw_sharpChatClient
+namespace SuperChainsaw_SharpChat
 {
     static class Program
     {
@@ -10,7 +11,7 @@ namespace super_chainsaw_sharpChatClient
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Application.Run(new ChatForm());
         }
     }
 }
