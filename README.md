@@ -1,4 +1,4 @@
-#SuperChainsaw SharpChat
+# SuperChainsaw SharpChat
 Projet scolaire visant à implémenter une messagerie en c#. Avec [Cacatoes](https://github.com/Cacatoes)
 
 ## How to launch SuperChainsaw SharpChat from its sources
